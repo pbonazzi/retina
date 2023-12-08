@@ -1,19 +1,20 @@
 #  👀 A Low-Power Neuromorphic Approach for Efficient Eye-Tracking   👀
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-detection-on-ini-30)](https://paperswithcode.com/sota/pupil-detection-on-ini-30?p=a-low-power-neuromorphic-approach-for)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-tracking-on-ini-30)](https://paperswithcode.com/sota/pupil-tracking-on-ini-30?p=a-low-power-neuromorphic-approach-for) \\
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-tracking-on-ini-30)](https://paperswithcode.com/sota/pupil-tracking-on-ini-30?p=a-low-power-neuromorphic-approach-for) 
 
 ### [💻 Blog](https://pietrobonazzi.com/projects/retina) |[📜 Paper](https://arxiv.org/pdf/2312.00425.pdf) | [🗂️ Data](https://pietrobonazzi.com/projects/retina)
 
 [A Low-Power Neuromorphic Approach for Efficient Eye-Tracking](https://arxiv.org/abs/2307.07813)  
  [🧑🏻‍🚀 Pietro Bonazzi ](https://linkedin.com/in/pietrobonazzi)<sup>1</sup>,
  Sizhen Bian <sup>1</sup>,
- Giovanni Lippolis <sup>1</sup>,
+ Giovanni Lippolis <sup>2</sup>,
  Yawei Li<sup>1</sup>,
- Sadique Sheik <sup>1</sup>,
+ Sadique Sheik <sup>3</sup>,
  Michele Magno<sup>1</sup>  <br>
 
-ETH Zurich, Switzerland  <br> 
-Event Cameras (IniVation/Speck) + Spiking Neuron Network (Retina) + Neuromorphic Chip (Speck) 
+<sup>1</sup> ETH Zurich, Switzerland  <br> 
+<sup>2</sup> IniVation AG, Switzerland  <br> 
+<sup>3</sup> SynSense AG, Switzerland
 
 ## ✉️ Citation ❤️
 ```
