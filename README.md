@@ -51,7 +51,7 @@ pip install git+https://gitlab.com/inivation/dv/dv-processing #https://dv-proces
 
 
 ### Get the dataset
-dependencies ["https://pietrobonazzi.com/projects/retina"]
+Submit the form here to get the dataset ["https://pietrobonazzi.com/projects/retina"]
 
 
 Verify `EyeTrackingDataSet_FromInivation`
