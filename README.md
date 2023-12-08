@@ -1,7 +1,6 @@
 #  👀 A Low-Power Neuromorphic Approach for Efficient Eye-Tracking   👀
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-detection-on-ini-30)](https://paperswithcode.com/sota/pupil-detection-on-ini-30?p=a-low-power-neuromorphic-approach-for)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-tracking-on-ini-30)](https://paperswithcode.com/sota/pupil-tracking-on-ini-30?p=a-low-power-neuromorphic-approach-for)
-Event Cameras (IniVation/Speck) + Spiking Neuron Network (Retina) + Neuromorphic Chip (Speck) 
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-tracking-on-ini-30)](https://paperswithcode.com/sota/pupil-tracking-on-ini-30?p=a-low-power-neuromorphic-approach-for) \\
 
 ### [💻 Blog](https://pietrobonazzi.com/projects/retina) |[📜 Paper](https://arxiv.org/pdf/2312.00425.pdf) | [🗂️ Data](https://pietrobonazzi.com/projects/retina)
 
@@ -14,6 +13,7 @@ Event Cameras (IniVation/Speck) + Spiking Neuron Network (Retina) + Neuromorphic
  Michele Magno<sup>1</sup>  <br>
 
 ETH Zurich, Switzerland  <br> 
+Event Cameras (IniVation/Speck) + Spiking Neuron Network (Retina) + Neuromorphic Chip (Speck) 
 
 ## ✉️ Citation ❤️
 ```
