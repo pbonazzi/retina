@@ -1,8 +1,31 @@
-# A Low-Power Neuromorphic Approach for Efficient Eye-Tracking 
+# Event-Based Spiking Neuron Network for Eye Tracking on SynSense Neuromorphic Vision Chip Speck
 
-Event-Based SNN model for Eye Tracking on SynSense Neuromorphic SoC
+#  👀 A Low-Power Neuromorphic Approach for Efficient Eye-Tracking   👀
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/tinytracker-ultra-fast-and-ultra-low-power/gaze-estimation-on-gazecapture)](https://paperswithcode.com/paper/tinytracker-ultra-fast-and-ultra-low-power)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-tracking-on-ini-30)](https://paperswithcode.com/sota/pupil-tracking-on-ini-30?p=a-low-power-neuromorphic-approach-for)
 
-## Getting started
+### [💻 Blog](https://pietrobonazzi.com/projects/retina) |[📜 Paper](https://arxiv.org/pdf/2312.00425.pdf) | [🗂️ Data](https://pietrobonazzi.com/projects/retina)
+
+[A Low-Power Neuromorphic Approach for Efcient Eye-Tracking](https://arxiv.org/abs/2307.07813)  
+ [🧑🏻‍🚀 Pietro Bonazzi ](https://linkedin.com/in/pietrobonazzi)\*<sup>1</sup>,
+ Sizhen Bian <sup>1</sup>,
+ Giovanni Lippolis <sup>1</sup>,
+ Yawei Li<sup>1</sup>,
+ Sadique Sheik <sup>1</sup>,
+ Michele Magno<sup>1</sup>  <br>
+
+\*denotes equal contribution  
+ETH Zurich, Switzerland  <br> 
+
+## ✉️ Citation ❤️
+```
+@article{bonazzi2023retina,
+  title={A Low-Power Neuromorphic Approach for Efcient Eye-Tracking},
+  author={Pietro Bonazzi, Sizhen Bian, Giovanni Lippolis, Yawei Li, Sadique Sheik, Michele Magno},
+  year={2023},
+}
+```
+## 🚀 TL;DR quickstart 🚀
 
 ### Clone the repo
 
@@ -52,6 +75,3 @@ Verify `EyeTrackingDataSet_FromInivation`
 python b_train.py --args
 ```
 
-
-## Authors and acknowledgment
-Author : Pietro Bonazzi.
