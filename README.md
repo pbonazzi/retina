@@ -18,10 +18,13 @@
 
 ## ✉️ Citation ❤️
 ```
-@article{bonazzi2023retina,
-  title={A Low-Power Neuromorphic Approach for Efcient Eye-Tracking},
-  author={Pietro Bonazzi, Sizhen Bian, Giovanni Lippolis, Yawei Li, Sadique Sheik, Michele Magno},
-  year={2023},
+@misc{bonazzi2023lowpower,
+      title={A Low-Power Neuromorphic Approach for Efficient Eye-Tracking}, 
+      author={Pietro Bonazzi and Sizhen Bian and Giovanni Lippolis and Yawei Li and Sadique Sheik and Michele Magno},
+      year={2023},
+      eprint={2312.00425},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
 }
 ```
 ## 🚀 TL;DR quickstart 🚀
