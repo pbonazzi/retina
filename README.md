@@ -55,7 +55,7 @@ pip install git+https://gitlab.com/inivation/dv/dv-processing #https://dv-proces
 
 
 ### Get the dataset
-Submit the form here to get the dataset ["https://pietrobonazzi.com/projects/retina"]
+The paper is currently under review. The dataset will be published upon acceptance. 
 
 
 Verify `EyeTrackingDataSet_FromInivation`
