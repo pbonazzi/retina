@@ -4,7 +4,7 @@
 
 ### [💻 Blog](https://pietrobonazzi.com/projects/retina) |[📜 Paper](https://arxiv.org/pdf/2312.00425.pdf) | [🗂️ Data](https://pietrobonazzi.com/projects/retina)
 
-[A Low-Power Neuromorphic Approach for Efficient Eye-Tracking](https://arxiv.org/abs/2307.07813)  
+[A Low-Power Neuromorphic Approach for Efficient Eye-Tracking](https://arxiv.org/abs/2312.00425)  
  [🧑🏻‍🚀 Pietro Bonazzi ](https://linkedin.com/in/pietrobonazzi)<sup>1</sup>,
  Sizhen Bian <sup>1</sup>,
  Giovanni Lippolis <sup>2</sup>,
