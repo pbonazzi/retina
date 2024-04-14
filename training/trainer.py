@@ -195,7 +195,6 @@ class Trainer:
             iter_bar = tqdm(self.train_loader, desc="Iteration Loop")
 
             for batch, (data, labels, avg_dt) in enumerate(iter_bar):
-                break
                 # Model Prep
                 self.model.train()
                 if self.train_with_lpf:
@@ -222,7 +221,7 @@ class Trainer:
 
                 self.spike_loss, spikes = 0, 0
 
-                if self.yolo_loss:
+                if self.yolo_loss: 
                     spikes = outputs.reshape(
                         self.batch_size,
                         self.num_bins,
@@ -253,6 +252,8 @@ class Trainer:
                 stuff_to_log = ["lr", "loss", "performance", "stats"]
                 if random.uniform(0, 1) > 0.98:
                     stuff_to_log.append("gifs")
+
+
                 self.log_stuff(
                     "train", data, epoch, batch, spikes, stuff_to_log=stuff_to_log
                 )
@@ -266,8 +267,8 @@ class Trainer:
                 # Optimization
                 self.loss["total_loss"].backward()
                 self.optimizer.step()
-                # self.model_lpf.reset_past()
-                # self.clip_weights()
+                #self.model_lpf.reset_past()
+                #self.clip_weights()
 
                 # Eval One or Full
                 if steps % 256 == 0 and steps != 0:
@@ -293,7 +294,7 @@ class Trainer:
         hist_dt, hist_evs = [], []
 
         for batch, (data, labels, avg_dt) in enumerate(iter_bar):
-            # self.reset_grad_step()
+            self.reset_grad_step()
             # Data Prep
             with torch.no_grad():
                 data = data.float().to(self.device)
@@ -367,15 +368,6 @@ class Trainer:
                 histogram_plot_iou.append(self.iou_metric.item())
 
         # Centroid Error
-        print("---------    evs------")
-        print(hist_evs)
-        print("---------    evs------")
-
-        print("----------   dt-----")
-        print(hist_dt)
-        print("----------   dt-----")
-
-        pdb.set_trace()
         plt.close()
         (n, bins, patches) = plt.hist(hist_evs, bins=1000, label="hst")
         plt.ylim(300)

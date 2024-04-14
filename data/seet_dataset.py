@@ -16,10 +16,10 @@ from thop import profile
 from scipy.ndimage import median_filter
 import pdb
 
+from data import get_transforms
+
 pretrained = False
 test_one =True 
-batch_size = 16
-seq = 40
 stride = 1
 stride_val = 40
 chunk_size = 500
@@ -77,7 +77,7 @@ def create_samples(data, sequence, stride):
 
 
 class SeetDataset(Dataset):
-    def __init__(self, folder, target_dir, seq, stride, dataset_params):
+    def __init__(self, folder, target_dir, target_transforms, seet_model, seq, stride, dataset_params):
         self.folder = sorted(folder)
         self.target_dir = target_dir
         self.seq = seq
@@ -85,7 +85,9 @@ class SeetDataset(Dataset):
         self.target = self._concatenate_files()
         self.interval = int((chunk_size - self.seq) / self.stride + 1)
         self.img_width = dataset_params["img_width"]
+        self.seet_model = seet_model
         self.img_height = dataset_params["img_height"]
+        self.target_transform = target_transforms
 
     def __len__(self):
         return len(self.folder) * self.interval  # assuming each file contains 100 samples
@@ -103,12 +105,15 @@ class SeetDataset(Dataset):
                 sample_resize.append(cv2.resize(sample[i,0], (int(self.img_width ), int(self.img_height ))))
             sample_resize = np.expand_dims(np.array(sample_resize), axis=1)
 
-        sample_resize = sample_resize.clip(0,1)
-        label1 = self.target[index][:, 0]/640
-        label2 = self.target[index][:, 1]/420
-        # label = label1, label2
-        label = np.concatenate([label1.cpu().reshape(-1, 1), label2.cpu().reshape(-1, 1)], axis=1) 
-        return torch.from_numpy(sample_resize).cuda(), label
+        events = torch.from_numpy((sample_resize > 0)*1).cuda()
+        label1 = (self.target[index][:, 0]/640).clip(0,0.9999)
+        label2 = (self.target[index][:, 1]/420).clip(0,0.9999)
+        if self.seet_model: 
+            label = torch.concat([label1.reshape(-1, 1), label2.reshape(-1, 1)], axis=1) 
+        else:
+            label = torch.stack([label1, label2])
+            label = self.target_transform(label)
+        return events, label, torch.ones_like(label)
 
     def _concatenate_files(self):
         # Sort the file paths
@@ -130,7 +135,10 @@ def load_filenames(path):
     with open(path, 'r') as f:
         return [line.strip() for line in f.readlines()]
 
-def get_seet_dataloader(dataset_params, data_dir = "/datasets/pbonazzi/h_syntheticeye/pupil_st/"): 
+def get_seet_dataloader(dataset_params, training_params, data_dir = "/datasets/pbonazzi/evs_eyetracking/h_syntheticeye/pupil_st"): 
+    
+    input_transforms, target_transforms = get_transforms(dataset_params, training_params)
+    
     data_dir_train = os.path.join(data_dir, "data_ts_pro", "train")
     data_dir_val = os.path.join(data_dir, "data_ts_pro", "val")
     target_dir = os.path.join(data_dir, "label")
@@ -147,12 +155,13 @@ def get_seet_dataloader(dataset_params, data_dir = "/datasets/pbonazzi/h_synthet
     target_val = [os.path.join(target_dir, f + '.txt') for f in val_filenames]
 
     # Create datasets
-    train_dataset = SeetDataset(data_train, target_train, seq, stride, dataset_params)
-    val_dataset = SeetDataset(data_val, target_val, seq, stride_val, dataset_params)
+    seet_model = not training_params["train_with_sinabs"]
+    train_dataset = SeetDataset(data_train, target_train, target_transforms, seet_model, dataset_params["num_bins"], stride, dataset_params)
+    val_dataset = SeetDataset(data_val, target_val,target_transforms, seet_model, dataset_params["num_bins"], stride_val, dataset_params)
 
     # Create dataloaders
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, generator=torch.Generator(device='cuda'))
-    valid_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, generator=torch.Generator(device='cuda'))
+    train_dataloader = DataLoader(train_dataset, batch_size=training_params["batch_size"], shuffle=True, generator=torch.Generator(device='cuda'))
+    valid_dataloader = DataLoader(val_dataset, batch_size=training_params["batch_size"], shuffle=True, generator=torch.Generator(device='cuda'))
 
     return train_dataloader, valid_dataloader
 

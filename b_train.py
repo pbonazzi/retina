@@ -17,20 +17,20 @@ from thop import profile
 def launch_fire(
     # wandb/generic
     project_name="event_eye_tracking",
-    arch_name="neuromorphic_yolo",
+    arch_name="retina",
     dataset_name="ini-30",
     run_name=None,
     output_dir="/datasets/pbonazzi/retina/output/",
-    data_dir="/datasets/pbonazzi/d_inivation_eye/",
+    data_dir="/datasets/pbonazzi/evs_eyetracking/d_inivation_eye",
     path_to_run=None,
     # dataset_params
     val_idx=1,
-    synthetic_dataset=False,
+    synthetic_dataset=True,
     overfit=False,
     input_channel=2,
     img_width=64,
     img_height=64,
-    num_bins=64,
+    num_bins=40,
     # dataset_params - accumulation/slicing
     events_per_frame=300,
     events_per_step=20,
@@ -53,12 +53,12 @@ def launch_fire(
     lr_model=1e-3,
     lr_model_lpf=1e-4,
     lr_model_lpf_tau=1e-3,
-    train_with_sinabs=True,
+    train_with_sinabs=False,
     train_with_exodus=False,
     train_ann_to_snn=False,
     train_with_mem=False,
     num_epochs=1,
-    batch_size=32,
+    batch_size=16,
     # training_params - optimization
     optimizer="Adam",
     reset_states_sinabs=True,
@@ -66,10 +66,10 @@ def launch_fire(
     # training_params - LPF layer
     train_with_lpf=True,
     lpf_tau_mem_syn=(5.0, 5.0),  # (50, 50),
-    lpf_kernel_size=20,  # 20
+    lpf_kernel_size=30,  # 20
     lpf_init=0.01,
     lpf_train=True,
-    # training_params - decimation layer
+    # training_params - Decimation layer
     train_with_dec=True,
     decimation_rate=1,
     # training_params - IAF layer
@@ -103,8 +103,8 @@ def launch_fire(
     torch.autograd.set_detect_anomaly(True)
     torch.multiprocessing.set_start_method("spawn", force=True)
     torch.set_default_tensor_type(torch.cuda.FloatTensor)
-    torch.set_num_threads(10)
-    torch.set_num_interop_threads(10)
+    #torch.set_num_threads(10)
+    #torch.set_num_interop_threads(10)
 
     # Logging
     wandb.init(
@@ -129,6 +129,10 @@ def launch_fire(
     os.makedirs(os.path.join(out_dir, "video"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "spikes"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "models"), exist_ok=True)
+
+    if not train_with_sinabs :
+        yolo_loss = False
+        euclidian_loss = True
 
     # Load/ Init
     if path_to_run != None:
@@ -186,7 +190,9 @@ def launch_fire(
             "spike_surrogate": spike_surrogate,
             "spike_window": spike_window,
         }
+        input_channel = 1 if synthetic_dataset else input_channel
         dataset_params = {
+            "synthetic_dataset": synthetic_dataset,
             "data_dir": data_dir,
             "num_bins": num_bins,
             "events_per_frame": events_per_frame,
@@ -211,10 +217,11 @@ def launch_fire(
 
         # Model
         training_params["output_dim"] = compute_output_dim(training_params)
-        if dataset_params["img_width"] <= 128 or dataset_params["img_height"] <= 128:
-            layers_config = get_model_for_speck(dataset_params, training_params)
-        else:
-            layers_config = get_model_for_baseline(dataset_params, training_params)
+        if train_with_sinabs:
+            if dataset_params["img_width"] <= 128 or dataset_params["img_height"] <= 128:
+                layers_config = get_model_for_speck(dataset_params, training_params)
+            else:
+                layers_config = get_model_for_baseline(dataset_params, training_params)
 
         training_params["train_idxs"], training_params["val_idxs"] = get_indexes(
             val_idx=val_idx,
@@ -224,7 +231,8 @@ def launch_fire(
 
         json.dump(training_params, open(f"{out_dir}/training_params.json", "w"))
         json.dump(dataset_params, open(f"{out_dir}/dataset_params.json", "w"))
-        json.dump(layers_config, open(f"{out_dir}/layer_configs.json", "w"))
+        if train_with_sinabs:
+            json.dump(layers_config, open(f"{out_dir}/layer_configs.json", "w"))
 
     # Model
     if train_with_sinabs:
@@ -275,7 +283,7 @@ def launch_fire(
             shuffle=False,
         )
     else:
-        train_loader, val_loader = get_seet_dataloader()
+        train_loader, val_loader = get_seet_dataloader(dataset_params, training_params)
 
     # Accelerate
     model = model.to(torch.device(device))

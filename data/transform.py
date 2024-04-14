@@ -55,6 +55,7 @@ class FromPupilCenterToBoundingBox:
         num_classes: int = 1,
         num_boxes: int = 2,
         bbox_w: int = 10,
+        synthetic_dataset: bool = False,
     ):
         self.yolo_loss = yolo_loss
         self.focal_loss = focal_loss
@@ -62,6 +63,7 @@ class FromPupilCenterToBoundingBox:
         self.image_size = image_size
         self.delta = bbox_w
         self.S, self.C, self.B = SxS_Grid, num_classes, num_boxes
+        self.synthetic_dataset = synthetic_dataset
 
     def __call__(self, target_mat):
         labels = []
@@ -69,13 +71,16 @@ class FromPupilCenterToBoundingBox:
         for i in range(self.num_bins):
             x, y = target_mat[:, i]
 
-            if self.image_size[0] != 640 or self.image_size[1] != 480:
+            if not self.synthetic_dataset and (self.image_size[0] != 640 or self.image_size[1] != 480):
                 assert x >= 0 and y >= 0
                 assert x <= 512 and y <= 512
                 x = x // (512 // self.image_size[0])
                 y = y // (512 // self.image_size[1])
 
-            x_norm, y_norm = x / self.image_size[0], y / self.image_size[1]
+            if not self.synthetic_dataset:
+                x_norm, y_norm = x / self.image_size[0], y / self.image_size[1]
+            else: 
+                x_norm, y_norm = x, y
 
             if not self.focal_loss and not self.yolo_loss:
                 labels.append(torch.tensor([x_norm, y_norm]))
@@ -96,13 +101,13 @@ class FromPupilCenterToBoundingBox:
                 )
                 row, column = int(self.S * y_norm), int(self.S * x_norm)
 
-                # label
+                # label 
                 label_matrix[row, column, self.C] = 1  # obj conf
                 label_matrix[
                     row, column, (self.C + 1) : (self.C + 1 + 4)
                 ] = box_coordinates  # box coord
                 if self.C > 0:
-                    label_matrix[row, column, 0] = 1  # class
+                    label_matrix[row, column, 0] = 1  # class  
                 labels.append(label_matrix)
 
         labels = torch.stack(labels)

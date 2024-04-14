@@ -1,0 +1,13 @@
+pandas 
+wandb 
+opencv-python
+fire 
+matplotlib 
+tqdm
+tonic 
+sinabs 
+sinabs-dynapcnn
+dv-processing 
+thop 
+onnx
+tables 

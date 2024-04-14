@@ -195,6 +195,7 @@ class EyeTrackingInivationDataset:
 
         frames = torch.rot90(torch.tensor(data).to(self.device), k=2, dims=(2, 3))
         frames = frames.permute(0, 1, 3, 2)
+        pdb.set_trace()
         labels = self.target_transform(np.vstack([x_axis, y_axis]))
 
         self.avg_dt += (evs_t[-1] - evs_t[0]) / self.num_bins

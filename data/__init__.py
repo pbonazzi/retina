@@ -42,7 +42,7 @@ def get_dataloader(name, training_params, dataset_params, device, shuffle) -> Da
         drop_last=True,
         shuffle=shuffle,
         generator=torch.Generator(device=device),
-        num_workers=10, 
+        num_workers=0, 
     )
 
     return dataloader
@@ -67,11 +67,12 @@ def get_transforms(dataset_params, training_params, augmentations: bool = False)
                                                         SxS_Grid=training_params["SxS_Grid"],
                                                         num_classes=training_params["num_classes"],
                                                         num_boxes=training_params["num_boxes"],
+                                                        synthetic_dataset=dataset_params["synthetic_dataset"],
                                                         image_size=(dataset_params["img_width"], dataset_params["img_height"]),
                                                         num_bins=dataset_params["num_bins"]) 
 
     input_transforms = [AedatEventsToXYTP()]
-    if dataset_params["img_width"] != 640 or dataset_params["img_height"] != 480:
+    if not dataset_params["synthetic_dataset"] and (dataset_params["img_width"] != 640 or dataset_params["img_height"] != 480):
         input_transforms.append(CenterCrop(sensor_size=(640, 480), size=(512, 512))) 
         input_transforms.append(Downscale())
 
