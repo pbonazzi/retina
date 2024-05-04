@@ -17,13 +17,11 @@
 
 ## ✉️ Citation ❤️
 ```
-@misc{bonazzi2023lowpower,
-      title={Retina : Low-Power Eye Tracking with Event Camera and Spiking Hardware}, 
-      author={Pietro Bonazzi and Sizhen Bian and Giovanni Lippolis and Yawei Li and Sadique Sheik and Michele Magno},
-      year={2023},
-      eprint={2312.00425},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
+@article{bonazzi2023low,
+  title={Retina: Low-Power Eye Tracking with Event Camera and Spiking Hardware},
+  author={Bonazzi, Pietro and Bian, Sizhen and Lippolis, Giovanni and Li, Yawei and Sheik, Sadique and Magno, Michele},
+  journal={IEEE/CVF Computer Society Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  year={2024}
 }
 ```
 ## 🚀 TL;DR quickstart 🚀
