@@ -36,7 +36,8 @@ cd retina
 
 ### Create the environment
 
-First, make sure your cmake is up to date and install `dv_processing` dependencies ["https://gitlab.com/inivation/dv/dv-processing"]
+First, make sure your cmake is up to date and install `dv_processing` dependencies 
+https://gitlab.com/inivation/dv/dv-processing
 
 Then, create the environment:
 
@@ -51,8 +52,8 @@ pip install torch==2.0.0+cu117 torchvision==0.15.1+cu117 torchaudio==2.0.1 --ind
 
 
 ### Get the dataset
-The dataset is owned by Synsense AG,
-Please fill up the form here ["https://pietrobonazzi.com/projects/retina"].
+Please fill up this form to download the dataset 
+https://pietrobonazzi.com/projects/retina
 
 Verify the structure:
 
