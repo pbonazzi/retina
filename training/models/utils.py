@@ -1,12 +1,13 @@
 import torch
 import sinabs
 import pdb
-from training.models.decimation import DecimationLayer
 try:
     import sinabs.exodus as ex
     exodus_installed = True
 except:
     exodus_installed = False
+
+from training.models.blocks.decimation import DecimationLayer
 
 def get_model_for_baseline(dataset_params, training_params):
     layers_config = [

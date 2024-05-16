@@ -1,21 +1,25 @@
-from sinabs.from_torch import from_model
 import time
 import numpy as np
 import torch, os, json, copy
-from sinabs.from_torch import from_model
-from training.models import convert_to_dynap
-from training.models.model import SynSenseEyeTracking
-from data import get_dataloader
+import shutil
+import pdb  
 from tqdm import tqdm
-from training.models.lpf import LPFOnline
-from training.loss import YoloLoss
+
+from sinabs.from_torch import from_model
 from sinabs.backend.dynapcnn.chip_factory import ChipFactory
-from data.speck_processor import events_to_label, label_to_bbox
 from sinabs.backend.dynapcnn.dynapcnn_visualizer import DynapcnnVisualizer
+
+
+from training.models.utils import convert_to_dynap
+from training.models.retina import Retina
+from training.models.blocks.lpf import LPFOnline
+from training.loss import YoloLoss
+
+from data.ini_30_module import get_ini_30_dataloader
+from data.speck_processor import events_to_label, label_to_bbox
+
 from figures.async_visualizer import AsyncGUI
 from figures.plot_animation import plot_animation_points
-import shutil
-import pdb 
 
 class Evaluator:
     def __init__(
@@ -48,7 +52,7 @@ class Evaluator:
 
         # initialize model
         self.training_params["train_with_mem"] = True
-        model = SynSenseEyeTracking(
+        model = Retina(
             self.dataset_params, self.training_params, self.layers_config
         )
         self.model = from_model(
@@ -120,7 +124,7 @@ class Evaluator:
         self, data_dir="/home/username/Desktop/pbl/d_inivation_eye/"
     ):
         self.set_up_error()
-        self.test_loader = get_dataloader(
+        self.test_loader = get_ini_30_dataloader(
             data_dir,
             dataset_params=self.dataset_params,
             shuffle=False,

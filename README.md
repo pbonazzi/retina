@@ -17,13 +17,11 @@
 
 ## ✉️ Citation ❤️
 ```
-@misc{bonazzi2023lowpower,
-      title={Retina : Low-Power Eye Tracking with Event Camera and Spiking Hardware}, 
-      author={Pietro Bonazzi and Sizhen Bian and Giovanni Lippolis and Yawei Li and Sadique Sheik and Michele Magno},
-      year={2023},
-      eprint={2312.00425},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
+@article{bonazzi2024retina,
+  title={Retina: Low-Power Eye Tracking with Event Camera and Spiking Hardware},
+  author={Bonazzi, Pietro and Bian, Sizhen and Lippolis, Giovanni and Li, Yawei and Sheik, Sadique and Magno, Michele},
+  journal={IEEE/CVF Computer Society Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
+  year={2024}
 }
 ```
 ## 🚀 TL;DR quickstart 🚀
@@ -43,9 +41,8 @@ First, make sure your cmake is up to date and install `dv_processing` dependenci
 Then, create the environment:
 
 ```
-python3.10 -m venv venv
-source venv/bin/activate
-
+conda create -n retina python=3.10
+conda activate retina
 pip install -r requirements.txt
 
 # if you have a GPU
@@ -54,10 +51,10 @@ pip install torch==2.0.0+cu117 torchvision==0.15.1+cu117 torchaudio==2.0.1 --ind
 
 
 ### Get the dataset
-The paper is currently under review. The dataset will be published upon acceptance. 
+The dataset is owned by Synsense AG,
+Please fill up the form here ["https://pietrobonazzi.com/projects/retina"].
 
-
-Verify `EyeTrackingDataSet_FromInivation`
+Verify the structure:
 
 ```
 .
@@ -73,6 +70,6 @@ Verify `EyeTrackingDataSet_FromInivation`
 --args : See the list of arguments in the launch_fire function
 
 ```
-python b_train.py --args
+python train.py --args
 ```
 

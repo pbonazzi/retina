@@ -76,7 +76,7 @@ def create_samples(data, sequence, stride):
     return subframes
 
 
-class SeetDataset(Dataset):
+class SyntheticDataset(Dataset):
     def __init__(self, folder, target_dir, target_transforms, seet_model, seq, stride, dataset_params):
         self.folder = sorted(folder)
         self.target_dir = target_dir
@@ -135,7 +135,7 @@ def load_filenames(path):
     with open(path, 'r') as f:
         return [line.strip() for line in f.readlines()]
 
-def get_seet_dataloader(dataset_params, training_params, data_dir = "/datasets/pbonazzi/evs_eyetracking/h_syntheticeye/pupil_st"): 
+def get_synthetic_dataloader(dataset_params, training_params, data_dir = "/datasets/pbonazzi/evs_eyetracking/h_syntheticeye/pupil_st"): 
     
     input_transforms, target_transforms = get_transforms(dataset_params, training_params)
     
@@ -156,8 +156,8 @@ def get_seet_dataloader(dataset_params, training_params, data_dir = "/datasets/p
 
     # Create datasets
     seet_model = not training_params["train_with_sinabs"]
-    train_dataset = SeetDataset(data_train, target_train, target_transforms, seet_model, dataset_params["num_bins"], stride, dataset_params)
-    val_dataset = SeetDataset(data_val, target_val,target_transforms, seet_model, dataset_params["num_bins"], stride_val, dataset_params)
+    train_dataset = SyntheticDataset(data_train, target_train, target_transforms, seet_model, dataset_params["num_bins"], stride, dataset_params)
+    val_dataset = SyntheticDataset(data_val, target_val,target_transforms, seet_model, dataset_params["num_bins"], stride_val, dataset_params)
 
     # Create dataloaders
     train_dataloader = DataLoader(train_dataset, batch_size=training_params["batch_size"], shuffle=True, generator=torch.Generator(device='cuda'))

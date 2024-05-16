@@ -12,12 +12,12 @@ import time
 import numpy as np
 import pandas as pd
 from PIL import Image
-from data.aeadat_processor import read_csv, AedatProcessorLinear
+from data.ini30_aeadat_processor import read_csv, AedatProcessorLinear
 import tonic
 from tonic.io import make_structured_array
 
 
-class EyeTrackingInivationDataset:
+class Ini30Dataset:
     def __init__(
         self,
         training_params,
@@ -194,8 +194,7 @@ class EyeTrackingInivationDataset:
             start_idx += t.shape[0]
 
         frames = torch.rot90(torch.tensor(data).to(self.device), k=2, dims=(2, 3))
-        frames = frames.permute(0, 1, 3, 2)
-        pdb.set_trace()
+        frames = frames.permute(0, 1, 3, 2) 
         labels = self.target_transform(np.vstack([x_axis, y_axis]))
 
         self.avg_dt += (evs_t[-1] - evs_t[0]) / self.num_bins

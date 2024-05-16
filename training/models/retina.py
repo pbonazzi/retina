@@ -2,17 +2,25 @@ import torch, pdb
 import torch.nn as nn
 import sinabs
 import sinabs.activation as sina
-from training.models import get_summary
-from training.models.decimation import DecimationLayer
+
+from training.models.utils import get_summary
+from training.models.blocks.decimation import DecimationLayer
 
 
-class SynSenseEyeTracking(nn.Module):
+class Retina(nn.Module):
     def __init__(self, dataset_params, training_params, layers_config):
-        super(SynSenseEyeTracking, self).__init__()
+        super(Retina, self).__init__()
 
         self.train_with_mem = training_params["train_with_mem"]
         self.train_with_exodus = training_params["train_with_exodus"]
-        self.dataset_params = dataset_params
+
+        # data configs
+        self.num_bins = dataset_params["num_bins"]
+        self.input_channel = dataset_params["input_channel"]
+        self.img_width = dataset_params["img_width"]
+        self.img_height = dataset_params["img_height"]
+
+        # train configs
         self.training_params = training_params
 
         # spiking layer activations
@@ -119,7 +127,7 @@ class SynSenseEyeTracking(nn.Module):
                         spike_fn=spike_fn,
                         surrogate_grad_fn=spike_grad,
                         reset_fn=spike_reset,
-                        num_timesteps=dataset_params["num_bins"],
+                        num_timesteps=self.num_bins,
                         tau_syn=layer["tau_syn"],
                         spike_threshold=layer["spike_threshold"],
                         record_states=self.train_with_mem,
@@ -133,7 +141,7 @@ class SynSenseEyeTracking(nn.Module):
                         spike_layer_class="sinabs.layers.iaf.IAFSqueeze",
                         decimation_rate=layer["decimation_rate"],
                         batch_size=training_params["batch_size"],
-                        num_channels=dataset_params["input_channel"],
+                        num_channels=self.input_channel,
                     )
                 )
             else:
@@ -146,10 +154,10 @@ class SynSenseEyeTracking(nn.Module):
     def compute_mac_operations(self):
         total_mac_ops = 0
         input_size = (
-            self.training_params["batch_size"] * self.dataset_params["num_bins"],
-            self.dataset_params["input_channel"],
-            self.dataset_params["img_width"],
-            self.dataset_params["img_height"],
+            self.training_params["batch_size"] * self.num_bins,
+            self.input_channel,
+            self.img_width,
+            self.img_height,
         )
         with torch.no_grad():
             x = torch.zeros(*input_size)

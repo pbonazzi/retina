@@ -1,23 +1,22 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor
+import tqdm
+import tables
 import os
 import pdb
 import cv2
-import pandas as pd
-import torch.nn as nn
-import torch
-import tqdm
-import tables
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt
+from thop import profile
+from scipy.ndimage import median_filter
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim 
+from torchvision.transforms import ToTensor
 from torch.utils.data import Dataset, DataLoader
-from thop import profile
-from scipy.ndimage import median_filter
-from training.models import get_summary
+
+from training.models.utils import get_summary
 
 class ConvLSTMCell(nn.Module):
 

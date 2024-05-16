@@ -8,12 +8,12 @@ from torch.utils.data import DataLoader
 from typing import List, Tuple, Union
 
 # custom
-from data.inivation_dataset import EyeTrackingInivationDataset
+from data.ini_30_dataset import Ini30Dataset
 from data.transform import FromPupilCenterToBoundingBox, AedatEventsToXYTP, Downscale
 
-def get_dataloader(name, training_params, dataset_params, device, shuffle) -> DataLoader:
+def get_ini_30_dataloader(name, training_params, dataset_params, device, shuffle) -> DataLoader:
     """
-    Create and return a DataLoader for the EyeTrackingInivationDataset.
+    Create and return a DataLoader for the Ini30Dataset.
 
     Parameters:
         data_dir (str): The directory path where the dataset is located.
@@ -22,12 +22,12 @@ def get_dataloader(name, training_params, dataset_params, device, shuffle) -> Da
         idxs (List[int]): A list of experiment indices to include in the dataset.
 
     Returns:
-        DataLoader: The DataLoader object for the EyeTrackingInivationDataset.
+        DataLoader: The DataLoader object for the Ini30Dataset.
     """
 
     input_transforms, target_transforms = get_transforms(dataset_params, training_params)
 
-    dataset = EyeTrackingInivationDataset(
+    dataset = Ini30Dataset(
         training_params=training_params,
         dataset_params=dataset_params,
         shuffle=shuffle,
@@ -50,7 +50,7 @@ def get_dataloader(name, training_params, dataset_params, device, shuffle) -> Da
 
 def get_transforms(dataset_params, training_params, augmentations: bool = False) -> Tuple[Compose, FromPupilCenterToBoundingBox]:
     """
-    Get input and target transforms for the EyeTrackingInivationDataset.
+    Get input and target transforms for the Ini30Dataset.
 
     Parameters:
         num_bins (int): The number of bins used for transformation.
@@ -82,11 +82,11 @@ def get_transforms(dataset_params, training_params, augmentations: bool = False)
     if dataset_params["denoise_evs"]:
         input_transforms.append(Denoise(filter_time=dataset_params["filter_time"]))
     
-    # if dataset_params["random_flip"] == 1:
-    #     input_transforms.append(RandomFlipPolarity())
+    if dataset_params["random_flip"]:
+        input_transforms.append(RandomFlipPolarity())
 
-    # if dataset_params["event_drop"]:
-    #     input_transforms.append(EventDrop(sensor_size=sensor_size))
+    if dataset_params["event_drop"]:
+        input_transforms.append(EventDrop(sensor_size=sensor_size))
         
     if dataset_params["input_channel"] == 1:
         input_transforms.append(MergePolarities())
@@ -98,12 +98,10 @@ def get_transforms(dataset_params, training_params, augmentations: bool = False)
     return input_transforms, target_transforms
 
 
-def get_indexes(val_idx=1, remove_experiments=True, overfit=False):
-    num_exp = 24 if remove_experiments else 30
-    train_val_idxs = list(range(0, num_exp))
+def get_indexes(val_idx=1): 
+    train_val_idxs = list(range(0, 30))
     #random.shuffle(train_val_idxs)
     train_val_idxs.remove(val_idx)
-    train_idxs = train_val_idxs # 0, 
-    val_idxs = [val_idx]  
-    if overfit:  train_idxs, val_idxs = train_idxs[:1],  val_idxs[-1:]
+    train_idxs = train_val_idxs
+    val_idxs = [val_idx]   
     return train_idxs, val_idxs

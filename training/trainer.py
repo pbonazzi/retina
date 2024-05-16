@@ -24,8 +24,8 @@ from training.loss import (
     intersection_over_union,
     SpeckLoss,
 )
-from training.models.lpf import LPFOnline
-from training.models import get_spiking_threshold_list, convert_sinabs_to_exodus
+from training.models.blocks.lpf import LPFOnline
+from training.models.utils import get_spiking_threshold_list, convert_sinabs_to_exodus
 
 
 class Trainer:

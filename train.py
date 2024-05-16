@@ -1,4 +1,6 @@
 import fire, wandb, os, json, pdb, torch
+from thop import profile
+
 from sinabs.from_torch import from_model
 from training.models import (
     convert_to_dynap,
@@ -6,26 +8,26 @@ from training.models import (
     compute_output_dim,
 )
 from training.trainer import Trainer
-from training.models import get_model_for_baseline, get_model_for_speck
-from training.models.model import SynSenseEyeTracking
+from training.models.utils import get_model_for_baseline, get_model_for_speck
+from training.models.model import Retina
 from training.models.baseline_3et import Baseline_3ET
-from data import get_dataloader, get_indexes
-from data.seet_dataset import get_seet_dataloader
-from thop import profile
+
+from data.ini_30_module import get_ini_30_dataloader, get_indexes
+from data.synthetic_dataset import get_synthetic_dataloader
 
 
 def launch_fire(
     # wandb/generic
     project_name="event_eye_tracking",
-    arch_name="retina",
-    dataset_name="ini-30",
+    arch_name="retina", # ["retina", "3et"]
+    dataset_name="ini-30", # ["ini-30", "synthetic"]
     run_name=None,
     output_dir="/datasets/pbonazzi/retina/output/",
-    data_dir="/datasets/pbonazzi/evs_eyetracking/d_inivation_eye",
+    data_dir="/datasets/pbonazzi/evs_eyetracking/evs_ini30",
     path_to_run=None,
+    verify_hardware_compatibility=True,
     # dataset_params
-    val_idx=1,
-    synthetic_dataset=True,
+    val_idx=1, 
     overfit=False,
     input_channel=2,
     img_width=64,
@@ -35,7 +37,7 @@ def launch_fire(
     events_per_frame=300,
     events_per_step=20,
     sliced_dataset=True,
-    fixed_window=True,
+    fixed_window=False,
     fixed_window_dt=2_500,  # us
     remove_experiments=True,
     # dataset_params - augmentation
@@ -52,8 +54,7 @@ def launch_fire(
     device="cuda",
     lr_model=1e-3,
     lr_model_lpf=1e-4,
-    lr_model_lpf_tau=1e-3,
-    train_with_sinabs=False,
+    lr_model_lpf_tau=1e-3, 
     train_with_exodus=False,
     train_ann_to_snn=False,
     train_with_mem=False,
@@ -77,13 +78,13 @@ def launch_fire(
     spike_reset=False,
     spike_surrogate=True,
     spike_window=0.5,
-    # training_parms - euclidian loss
+    # decimation_rate - Euclidian loss
     euclidian_loss=False,
     w_euclidian_loss=7.5,
-    # training_params - focal loss
+    # training_params - Focal loss
     focal_loss=False,
     bbox_w=5,
-    # training_params - yolo loss
+    # training_params - Yolo loss
     yolo_loss=True,
     num_classes=0,
     num_boxes=2,
@@ -92,19 +93,20 @@ def launch_fire(
     w_tracking_loss=0,
     w_conf_loss=1.5,  # 1.5,
     w_spike_loss=0,
-    # training_params - speck loss
+    # training_params - Speck loss
     w_synap_loss=0,  # 1e-8,
     synops_lim=(1e3, 1e6),
     w_input_loss=0,  # 1e-8,
     w_fire_loss=0,  # 1e-4,
     firing_lim=(0.3, 0.4),
 ):
+
     assert torch.cuda.is_available()
     torch.autograd.set_detect_anomaly(True)
     torch.multiprocessing.set_start_method("spawn", force=True)
     torch.set_default_tensor_type(torch.cuda.FloatTensor)
-    #torch.set_num_threads(10)
-    #torch.set_num_interop_threads(10)
+    torch.set_num_threads(10)
+    torch.set_num_interop_threads(10)
 
     # Logging
     wandb.init(
@@ -122,15 +124,13 @@ def launch_fire(
     # Output Folder
     run_name = wandb.run.name
     index = run_name.rindex("-")
-    out_dir = os.path.join(
-        output_dir, "wandb", f"{run_name[index+1:]}-{run_name[:index]}"
-    )
+    out_dir = os.path.join( output_dir, "wandb", f"{run_name[index+1:]}-{run_name[:index]}" )
     os.makedirs(out_dir, exist_ok=True)
     os.makedirs(os.path.join(out_dir, "video"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "spikes"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "models"), exist_ok=True)
 
-    if not train_with_sinabs :
+    if arch_name != "retina" :
         yolo_loss = False
         euclidian_loss = True
 
@@ -146,7 +146,7 @@ def launch_fire(
             open(os.path.join(path_to_run, "layer_configs.json"), "r")
         )
     else:
-        training_params = {
+        training_params = { 
             "device": device,
             "lr_model": lr_model,
             "lr_model_lpf": lr_model_lpf,
@@ -155,16 +155,16 @@ def launch_fire(
             "num_epochs": num_epochs,
             "batch_size": batch_size,
             "optimizer": optimizer,
-            "scheduler": scheduler,
-            "train_with_sinabs": train_with_sinabs,
+            "scheduler": scheduler, 
             "train_with_exodus": train_with_exodus,
             "train_ann_to_snn": train_ann_to_snn,
-            "train_with_lpf": train_with_lpf and train_with_sinabs,
+            "train_with_lpf": train_with_lpf and arch_name =="retina",
+            "train_with_sinabs": arch_name =="retina",
             "lpf_tau_mem_syn": lpf_tau_mem_syn,
             "lpf_kernel_size": min(lpf_kernel_size, num_bins),
             "lpf_init": lpf_init,
             "lpf_train": lpf_train,
-            "train_with_mem": train_with_mem and train_with_sinabs,
+            "train_with_mem": train_with_mem and arch_name =="retina",
             "train_with_dec": train_with_dec,
             "reset_states_sinabs": reset_states_sinabs,
             "w_euclidian_loss": w_euclidian_loss,
@@ -190,9 +190,9 @@ def launch_fire(
             "spike_surrogate": spike_surrogate,
             "spike_window": spike_window,
         }
-        input_channel = 1 if synthetic_dataset else input_channel
-        dataset_params = {
-            "synthetic_dataset": synthetic_dataset,
+        input_channel = 1 if dataset_name=="synthetic" else input_channel
+        dataset_params = { 
+            "dataset_name": dataset_name
             "data_dir": data_dir,
             "num_bins": num_bins,
             "events_per_frame": events_per_frame,
@@ -217,26 +217,22 @@ def launch_fire(
 
         # Model
         training_params["output_dim"] = compute_output_dim(training_params)
-        if train_with_sinabs:
+        if arch_name =="retina":
             if dataset_params["img_width"] <= 128 or dataset_params["img_height"] <= 128:
                 layers_config = get_model_for_speck(dataset_params, training_params)
             else:
                 layers_config = get_model_for_baseline(dataset_params, training_params)
 
-        training_params["train_idxs"], training_params["val_idxs"] = get_indexes(
-            val_idx=val_idx,
-            remove_experiments=dataset_params["remove_experiments"],
-            overfit=overfit,
-        )
+        training_params["train_idxs"], training_params["val_idxs"] = get_indexes(val_idx=val_idx)
 
         json.dump(training_params, open(f"{out_dir}/training_params.json", "w"))
         json.dump(dataset_params, open(f"{out_dir}/dataset_params.json", "w"))
-        if train_with_sinabs:
+        if arch_name =="retina":
             json.dump(layers_config, open(f"{out_dir}/layer_configs.json", "w"))
 
     # Model
-    if train_with_sinabs:
-        model = SynSenseEyeTracking(dataset_params, training_params, layers_config)
+    if arch_name == "retina":
+        model = Retina(dataset_params, training_params, layers_config)
         model = from_model(
             model.seq,
             add_spiking_output=False,
@@ -257,17 +253,17 @@ def launch_fire(
         dataset_params["img_width"],
         dataset_params["img_height"],
     )
-    if (
-        dataset_params["img_width"] <= 128 or dataset_params["img_height"] <= 128
-    ) and train_with_sinabs:
+
+    if verify_hardware_compatibility:
+
         dynapcnn_net = convert_to_dynap(
             model.spiking_model.cpu(), input_shape=input_shape
         )
         dynapcnn_net.make_config(device="speck2fmodule")
 
     # Datasets
-    if not synthetic_dataset:
-        train_loader = get_dataloader(
+    if dataset_name =="ini-30":
+        train_loader = get_ini_30_dataloader(
             name="train",
             device=torch.device(device),
             dataset_params=dataset_params,
@@ -275,7 +271,7 @@ def launch_fire(
             shuffle=True,
         )
 
-        val_loader = get_dataloader(
+        val_loader = get_ini_30_dataloader(
             name="val",
             device=torch.device(device),
             dataset_params=dataset_params,
@@ -283,16 +279,16 @@ def launch_fire(
             shuffle=False,
         )
     else:
-        train_loader, val_loader = get_seet_dataloader(dataset_params, training_params)
+        train_loader, val_loader = get_synthetic_dataloader(dataset_params, training_params)
 
     # Accelerate
     model = model.to(torch.device(device))
-    if train_with_exodus:
+    if train_with_exodus and arch_name == "retina":
         model.spiking_model = convert_sinabs_to_exodus(model.spiking_model)
         print("Model converted to EXODUS")
 
     # Trainer
-    if train_with_sinabs:
+    if arch_name == "retina":
         model.spiking_model(
             torch.ones(
                 training_params["batch_size"] * dataset_params["num_bins"], *input_shape
