@@ -55,7 +55,7 @@ class FromPupilCenterToBoundingBox:
         num_classes: int = 1,
         num_boxes: int = 2,
         bbox_w: int = 10,
-        synthetic_dataset: bool = False,
+        dataset_name="ini-30",
     ):
         self.yolo_loss = yolo_loss
         self.focal_loss = focal_loss
@@ -63,7 +63,7 @@ class FromPupilCenterToBoundingBox:
         self.image_size = image_size
         self.delta = bbox_w
         self.S, self.C, self.B = SxS_Grid, num_classes, num_boxes
-        self.synthetic_dataset = synthetic_dataset
+        self.dataset_name = dataset_name
 
     def __call__(self, target_mat):
         labels = []
@@ -71,13 +71,13 @@ class FromPupilCenterToBoundingBox:
         for i in range(self.num_bins):
             x, y = target_mat[:, i]
 
-            if not self.synthetic_dataset and (self.image_size[0] != 640 or self.image_size[1] != 480):
+            if self.dataset_name=="ini-30" and (self.image_size[0] != 640 or self.image_size[1] != 480):
                 assert x >= 0 and y >= 0
                 assert x <= 512 and y <= 512
                 x = x // (512 // self.image_size[0])
                 y = y // (512 // self.image_size[1])
 
-            if not self.synthetic_dataset:
+            if self.dataset_name=="ini-30":
                 x_norm, y_norm = x / self.image_size[0], y / self.image_size[1]
             else: 
                 x_norm, y_norm = x, y

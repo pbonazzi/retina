@@ -12,7 +12,7 @@ import time
 import numpy as np
 import pandas as pd
 from PIL import Image
-from data.ini30_aeadat_processor import read_csv, AedatProcessorLinear
+from data.ini_30_aeadat_processor import read_csv, AedatProcessorLinear
 import tonic
 from tonic.io import make_structured_array
 

@@ -16,7 +16,7 @@ from thop import profile
 from scipy.ndimage import median_filter
 import pdb
 
-from data import get_transforms
+from data.ini_30_module import get_transforms
 
 pretrained = False
 test_one =True 

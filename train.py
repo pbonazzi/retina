@@ -2,15 +2,19 @@ import fire, wandb, os, json, pdb, torch
 from thop import profile
 
 from sinabs.from_torch import from_model
-from training.models import (
+
+
+from training.trainer import Trainer 
+from training.models.retina import Retina
+from training.models.baseline_3et import Baseline_3ET
+
+from training.models.utils import (
     convert_to_dynap,
+    get_model_for_baseline, 
+    get_model_for_speck,
     convert_sinabs_to_exodus,
     compute_output_dim,
 )
-from training.trainer import Trainer
-from training.models.utils import get_model_for_baseline, get_model_for_speck
-from training.models.model import Retina
-from training.models.baseline_3et import Baseline_3ET
 
 from data.ini_30_module import get_ini_30_dataloader, get_indexes
 from data.synthetic_dataset import get_synthetic_dataloader
@@ -50,6 +54,7 @@ def launch_fire(
     pre_decimate=False,
     pre_decimate_factor=4,
     denoise_evs=False,
+    random_flip=False,
     # training_params
     device="cuda",
     lr_model=1e-3,
@@ -192,7 +197,7 @@ def launch_fire(
         }
         input_channel = 1 if dataset_name=="synthetic" else input_channel
         dataset_params = { 
-            "dataset_name": dataset_name
+            "dataset_name": dataset_name,
             "data_dir": data_dir,
             "num_bins": num_bins,
             "events_per_frame": events_per_frame,
@@ -213,6 +218,7 @@ def launch_fire(
             "pre_decimate": pre_decimate,
             "pre_decimate_factor": pre_decimate_factor,
             "denoise_evs": denoise_evs,
+            "random_flip":random_flip
         }
 
         # Model
