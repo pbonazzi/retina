@@ -41,8 +41,7 @@ class Ini30Dataset:
         self.fixed_window_dt = dataset_params["fixed_window_dt"]
 
         self.decimation_rate = training_params["decimation_rate"]
-        self.data_dir = dataset_params["data_dir"]
-        self.sliced_dataset = dataset_params["sliced_dataset"]
+        self.data_dir = dataset_params["data_dir"] 
         self.input_channel = dataset_params["input_channel"]
         self.img_width = dataset_params["img_width"]
         self.img_height = dataset_params["img_height"]

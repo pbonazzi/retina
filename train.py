@@ -22,6 +22,7 @@ from data.synthetic_dataset import get_synthetic_dataloader
 
 def launch_fire(
     # wandb/generic
+    wandb_mode="run",  # ["disabled", "run"]
     project_name="event_eye_tracking",
     arch_name="retina", # ["retina", "3et"]
     dataset_name="ini-30", # ["ini-30", "synthetic"]
@@ -32,18 +33,15 @@ def launch_fire(
     verify_hardware_compatibility=True,
     # dataset_params
     val_idx=1, 
-    overfit=False,
     input_channel=2,
     img_width=64,
     img_height=64,
     num_bins=40,
     # dataset_params - accumulation/slicing
-    events_per_frame=300,
-    events_per_step=20,
-    sliced_dataset=True,
     fixed_window=False,
-    fixed_window_dt=2_500,  # us
-    remove_experiments=True,
+    fixed_window_dt=2_500,  # us 
+    events_per_frame=300,
+    events_per_step=20, 
     # dataset_params - augmentation
     shuffle=True,
     spatial_factor=0.25,
@@ -115,7 +113,7 @@ def launch_fire(
 
     # Logging
     wandb.init(
-        mode="disabled" if overfit else "run",
+        mode=wandb_mode,
         name=run_name,
         project=project_name,
         dir=output_dir,
@@ -204,11 +202,9 @@ def launch_fire(
             "events_per_step": events_per_step,
             "input_channel": input_channel,
             "img_width": img_width,
-            "img_height": img_height,
-            "sliced_dataset": sliced_dataset,
+            "img_height": img_height, 
             "fixed_window": fixed_window,
-            "fixed_window_dt": fixed_window_dt,
-            "remove_experiments": remove_experiments,
+            "fixed_window_dt": fixed_window_dt, 
             "shuffle": shuffle,
             "spatial_factor": spatial_factor,
             "center_crop": center_crop,
@@ -218,7 +214,7 @@ def launch_fire(
             "pre_decimate": pre_decimate,
             "pre_decimate_factor": pre_decimate_factor,
             "denoise_evs": denoise_evs,
-            "random_flip":random_flip
+            "random_flip": random_flip
         }
 
         # Model
