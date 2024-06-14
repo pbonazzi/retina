@@ -16,6 +16,9 @@
 <sup>2</sup> SynSense AG, Switzerland
 
 ## ✉️ Citation ❤️
+
+Leave a star to support our open source initiative!⭐️
+
 ```
 @InProceedings{Bonazzi_2024_CVPR,
     author    = {Bonazzi, Pietro and Bian, Sizhen and Lippolis, Giovanni and Li, Yawei and Sheik, Sadique and Magno, Michele},
