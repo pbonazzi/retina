@@ -2,7 +2,7 @@
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-detection-on-ini-30)](https://paperswithcode.com/sota/pupil-detection-on-ini-30?p=a-low-power-neuromorphic-approach-for)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/a-low-power-neuromorphic-approach-for/pupil-tracking-on-ini-30)](https://paperswithcode.com/sota/pupil-tracking-on-ini-30?p=a-low-power-neuromorphic-approach-for) 
 
-### [💻 Blog](https://pietrobonazzi.com/projects/retina) |[📜 Paper](https://arxiv.org/pdf/2312.00425.pdf) | [🗂️ Data](https://pietrobonazzi.com/projects/retina)
+### [💻 Blog](https://pietrobonazzi.com/projects/retina) |[📜 Paper](https://openaccess.thecvf.com/content/CVPR2024W/AI4Streaming/html/Bonazzi_Retina__Low-Power_Eye_Tracking_with_Event_Camera_and_Spiking_CVPRW_2024_paper.html) | [🗂️ Data](https://pietrobonazzi.com/projects/retina)
 
 [Retina : Low-Power Eye Tracking with Event Camera and Spiking Hardware](https://arxiv.org/abs/2312.00425)  
  [🧑🏻‍🚀 Pietro Bonazzi ](https://linkedin.com/in/pietrobonazzi)<sup>1</sup>,
@@ -17,11 +17,13 @@
 
 ## ✉️ Citation ❤️
 ```
-@article{bonazzi2024retina,
-  title={Retina: Low-Power Eye Tracking with Event Camera and Spiking Hardware},
-  author={Bonazzi, Pietro and Bian, Sizhen and Lippolis, Giovanni and Li, Yawei and Sheik, Sadique and Magno, Michele},
-  journal={IEEE/CVF Computer Society Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)},
-  year={2024}
+@InProceedings{Bonazzi_2024_CVPR,
+    author    = {Bonazzi, Pietro and Bian, Sizhen and Lippolis, Giovanni and Li, Yawei and Sheik, Sadique and Magno, Michele},
+    title     = {Retina : Low-Power Eye Tracking with Event Camera and Spiking Hardware},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+    month     = {June},
+    year      = {2024},
+    pages     = {5684-5692}
 }
 ```
 ## 🚀 TL;DR quickstart 🚀
