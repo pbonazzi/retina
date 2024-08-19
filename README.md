@@ -41,20 +41,12 @@ cd retina
 
 ### Create the environment
 
-First, clone the `dv_processing` submodule with  
-
-```
-pip install git+https://gitlab.com/inivation/dv/dv-processing.git
-```
-
-Then, create the environment:
-
 ```
 conda create -n retina python=3.10 numpy=1.8.1
 conda activate retina
 pip install -r requirements.txt
+pip install git+https://gitlab.com/inivation/dv/dv-processing.git
 ```
-
 
 ### Get the dataset
 Please fill up this form to download the dataset 
