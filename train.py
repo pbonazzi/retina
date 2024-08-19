@@ -1,8 +1,7 @@
 import fire, wandb, os, json, pdb, torch
 from thop import profile
 
-from sinabs.from_torch import from_model
-
+from sinabs.from_torch import from_model 
 
 from training.trainer import Trainer 
 from training.models.retina import Retina
@@ -105,11 +104,14 @@ def launch_fire(
 ):
 
     assert torch.cuda.is_available()
+
     torch.autograd.set_detect_anomaly(True)
-    torch.multiprocessing.set_start_method("spawn", force=True)
-    torch.set_default_tensor_type(torch.cuda.FloatTensor)
-    torch.set_num_threads(10)
-    torch.set_num_interop_threads(10)
+    torch.set_default_dtype(torch.float)
+    torch.set_default_device(device)
+
+    # torch.multiprocessing.set_start_method("spawn", force=True)
+    # torch.set_num_threads(10)
+    # torch.set_num_interop_threads(10)
 
     # Logging
     wandb.init(

@@ -420,6 +420,7 @@ class Trainer:
         torch.save(
             saved_attr, os.path.join(self.out_dir, "models", f"step_{train_steps}.pt")
         )
+        
         dummy_input = torch.randn(
             self.batch_size,
             self.num_bins,
