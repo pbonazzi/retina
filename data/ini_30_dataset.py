@@ -51,7 +51,7 @@ class Ini30Dataset:
         self.uniform_noise = dataset_params["uniform_noise"]
         self.time_jitter = dataset_params["time_jitter"]
 
-        self.y = pd.read_csv(os.path.join(self.data_dir, "silver.csv"))
+        self.y = pd.read_csv(os.path.join(self.data_dir, "silver.csv"), delimiter='\t') 
         self.experiments = np.unique(self.y["exp_name"]).tolist()
 
         filter_values = [self.experiments[item] for item in list_experiments]

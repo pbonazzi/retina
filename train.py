@@ -62,7 +62,7 @@ def launch_fire(
     train_ann_to_snn=False,
     train_with_mem=False,
     num_epochs=1,
-    batch_size=16,
+    batch_size=32,
     # training_params - optimization
     optimizer="Adam",
     reset_states_sinabs=True,

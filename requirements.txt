@@ -4,10 +4,11 @@ opencv-python
 fire 
 matplotlib 
 tqdm
+torchvision
 tonic 
 sinabs 
 sinabs-dynapcnn
 dv-processing 
 thop 
 onnx
-tables 
+tables  

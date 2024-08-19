@@ -41,13 +41,16 @@ cd retina
 
 ### Create the environment
 
-First, make sure your cmake is up to date and install `dv_processing` dependencies 
-https://gitlab.com/inivation/dv/dv-processing
+First, clone the `dv_processing` submodule with  
+
+```
+pip install git+https://gitlab.com/inivation/dv/dv-processing.git
+```
 
 Then, create the environment:
 
 ```
-conda create -n retina python=3.10
+conda create -n retina python=3.10 numpy=1.8.1
 conda activate retina
 pip install -r requirements.txt
 ```
@@ -70,9 +73,9 @@ Verify the structure:
 
 
 ## Training
---args : See the list of arguments in the launch_fire function
+See the list of arguments in the launch_fire function. The `run-name` has the format `version-name`.
 
 ```
-python train.py --args
+python train.py --run-name="1-train" 
 ```
 
