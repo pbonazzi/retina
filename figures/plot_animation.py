@@ -1,7 +1,11 @@
 import pdb, torch  
+import matplotlib
+matplotlib.use('Agg') 
+
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import matplotlib.patches as patches
+
 
 def plot_animation_spikes(events, spikes):
     """

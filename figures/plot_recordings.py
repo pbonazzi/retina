@@ -9,13 +9,17 @@ rec_list = ["2022-04-12_adam_01"    ,  "2022-04-22_elisa_01"    , "2022-04-26_ch
 
 
 import pathlib, pdb, os
-from data.aeadat_processor import read_csv, AedatProcessorLinear 
 import numpy as np 
 from tqdm import tqdm 
 import torch 
+
+import matplotlib
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import matplotlib.patches as patches 
+
+from data.aeadat_processor import read_csv, AedatProcessorLinear 
 
 delta = 10 
 

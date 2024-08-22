@@ -15,6 +15,21 @@
 <sup>1</sup> ETH Zurich, Switzerland  <br> 
 <sup>2</sup> SynSense AG, Switzerland
 
+
+### Quick Comparaison: Ground Truth (GT) vs. Prediction
+
+In the following GIFs, **Yellow** represents the Ground Truth (GT), and **Green** represents the Prediction. These images are taken from the validation set.
+
+<table>
+  <tr>
+    <td><img src="docs/0_val_3_0.gif" width="250" height="250" /></td>
+    <td><img src="docs/0_val_12_0.gif" width="250" height="250" /></td>
+    <td><img src="docs/0_val_16_0.gif" width="250" height="250" /></td>
+    <td><img src="docs/0_val_19_0.gif" width="250" height="250" /></td>
+  </tr>
+</table>
+
+
 ## ✉️ Citation ❤️
 
 Leave a star to support our open source initiative!⭐️

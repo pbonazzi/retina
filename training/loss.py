@@ -159,34 +159,23 @@ class SpeckLoss(nn.Module):
         for key in self.layer_stats["parameter"].keys():
             synops = self.layer_stats["parameter"][key]["synops/s"]
             if synops < self.synops_lim[0]:
-                lower_synops_loss += (
-                    self.synops_lim[0] - synops
-                ) ** 2 / self.synops_lim[0] ** 2
+                lower_synops_loss += (self.synops_lim[0] - synops) ** 2 / self.synops_lim[0] ** 2
             if synops > self.synops_lim[1]:
-                upper_synops_loss += (
-                    self.synops_lim[1] - synops
-                ) ** 2 / self.synops_lim[1] ** 2
+                upper_synops_loss += (self.synops_lim[1] - synops) ** 2 / self.synops_lim[1] ** 2
 
-        # Limits Simulation Device Mismatch for Multi Firing Kernels
-        input_loss, fire_loss = 0, 0
+        # Limits Simulation Device Mismatch for Multi Firing Kernels 
         last_layer_idx = len(self.layer_stats["spiking"])
-        firing_rates = np.linspace(
-            self.firing_lim[0], self.firing_lim[1], last_layer_idx
-        )
+        firing_rates = np.linspace(self.firing_lim[0], self.firing_lim[1], last_layer_idx)
         for i, (_, stats) in enumerate(self.layer_stats["spiking"].items()):
-            inputs_clipped = torch.nn.functional.relu(
-                stats["input"] - self.spiking_thresholds[i]
-            )
-            input_loss += torch.sqrt(torch.mean(inputs_clipped**2) + 1e-8)
-            fire_loss += (firing_rates[i] - stats["firing_rate"]) ** 2 / firing_rates[
-                i
-            ] ** 2
+            inputs_clipped = torch.nn.functional.relu(stats["input"] - self.spiking_thresholds[i])
+            self.input_loss += torch.sqrt(torch.mean(inputs_clipped**2) + 1e-8)
+            self.fire_loss += (firing_rates[i] - stats["firing_rate"]) ** 2 / firing_rates[i] ** 2
 
         loss = {
             "upper_synops_loss": self.w_synap_loss * upper_synops_loss,
             "lower_synops_loss": self.w_synap_loss * lower_synops_loss,
-            "input_loss": self.w_input_loss * input_loss,
-            "fire_loss": self.w_fire_loss * fire_loss,
+            "input_loss": self.w_input_loss * self.input_loss,
+            "fire_loss": self.w_fire_loss * self.fire_loss,
         }
 
         return loss

@@ -2,10 +2,13 @@ import pdb, fire, re
 from tqdm import tqdm
 from data import get_dataloader
 import torch
+
+import matplotlib
+matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
+
 from multiprocessing import Pool, cpu_count
 import numpy as np
-import matplotlib
 from mpl_toolkits.axes_grid1 import AxesGrid
 from figures.plot_animation import add_inner_title
 matplotlib.rcParams.update({'font.size': 16})
