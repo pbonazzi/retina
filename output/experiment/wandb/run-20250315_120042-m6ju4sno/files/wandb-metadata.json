@@ -1,0 +1,50 @@
+{
+  "os": "Linux-6.8.0-49-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.10.15",
+  "startedAt": "2025-03-15T11:00:42.576918Z",
+  "args": [
+    "--run_name=experiment"
+  ],
+  "program": "-m scripts.train",
+  "git": {
+    "remote": "https://github.com/pbonazzi/retina.git",
+    "commit": "909e0ab50674d6a21f2e64dcc592908016855490"
+  },
+  "email": "pietrobonazzi.jobs@gmail.com",
+  "root": "./output/experiment",
+  "host": "venus",
+  "username": "pbonazzi",
+  "executable": "/home/pbonazzi/miniconda3/envs/retina/bin/python3",
+  "cpu_count": 24,
+  "cpu_count_logical": 32,
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "gpu_count": 2,
+  "disk": {
+    "/": {
+      "total": "1967317549056",
+      "used": "1513293189120"
+    }
+  },
+  "memory": {
+    "total": "134823354368"
+  },
+  "cpu": {
+    "count": 24,
+    "countLogical": 32
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 4090",
+      "memoryTotal": "25757220864",
+      "cudaCores": 16384,
+      "architecture": "Ada"
+    },
+    {
+      "name": "NVIDIA GeForce RTX 4090",
+      "memoryTotal": "25757220864",
+      "cudaCores": 16384,
+      "architecture": "Ada"
+    }
+  ],
+  "cudaVersion": "12.6"
+}

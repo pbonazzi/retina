@@ -13,7 +13,6 @@ import pandas as pd
 
 import dv_processing as dv
 
-
 class AedatProcessorBase:
     """
     Base class processing aedat4 files.

@@ -13,14 +13,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim 
-from torchvision.transforms import ToTensor
-from torch.utils.data import Dataset, DataLoader
-
-from training.models.utils import get_summary
+from torchvision.transforms import ToTensor 
+ 
 
 class ConvLSTMCell(nn.Module):
 
-    def __init__(self, input_dim, hidden_dim, kernel_size, bias, device):
+    def __init__(self, input_dim, hidden_dim, kernel_size, bias):
         """
         Initialize ConvLSTM cell.
 
@@ -49,12 +47,12 @@ class ConvLSTMCell(nn.Module):
                               out_channels=4 * self.hidden_dim,
                               kernel_size=self.kernel_size,
                               padding=self.padding,
-                              bias=self.bias).to(device)
+                              bias=self.bias)
 
     def forward(self, input_tensor, cur_state):
         h_cur, c_cur = cur_state 
         combined = torch.cat([input_tensor, h_cur.to(input_tensor.device)], dim=1)  # concatenate along channel axis
-        combined_conv = torch.relu(self.conv(combined.to(self.conv.weight.device)))
+        combined_conv = torch.relu(self.conv(combined.to(input_tensor.device)))
         cc_i, cc_f, cc_o, cc_g = torch.split(combined_conv, self.hidden_dim, dim=1)
         i = torch.sigmoid(cc_i)
         f = torch.sigmoid(cc_f)
@@ -100,7 +98,7 @@ class ConvLSTM(nn.Module):
         >> h = last_states[0][0]  # 0 for layer index, 0 for h index
     """
 
-    def __init__(self, input_dim, hidden_dim, kernel_size, num_layers, device,
+    def __init__(self, input_dim, hidden_dim, kernel_size, num_layers,
                  batch_first=False, bias=True, return_all_layers=False):
         super(ConvLSTM, self).__init__()
 
@@ -124,11 +122,10 @@ class ConvLSTM(nn.Module):
         for i in range(0, self.num_layers):
             cur_input_dim = self.input_dim if i == 0 else self.hidden_dim[i - 1]
 
-            cell_list.append(ConvLSTMCell(input_dim=cur_input_dim,
-                                          device=device,
+            cell_list.append(ConvLSTMCell(input_dim=cur_input_dim, 
                                           hidden_dim=self.hidden_dim[i],
                                           kernel_size=self.kernel_size[i],
-                                          bias=self.bias).to(device))
+                                          bias=self.bias))
 
         self.cell_list = nn.ModuleList(cell_list)
 
@@ -205,31 +202,28 @@ class ConvLSTM(nn.Module):
         return param
         
 class Baseline_3ET(nn.Module):
-    def __init__(self, height, width, input_dim, device):
+    def __init__(self, height, width, input_dim):
         super(Baseline_3ET, self).__init__() 
 
-        self.device = device
+        self.convlstm1 = ConvLSTM(input_dim=input_dim, hidden_dim=8, kernel_size=(3, 3), num_layers=1, batch_first=True)
+        self.bn1 = nn.BatchNorm3d(8)
+        self.pool1 = nn.MaxPool3d(kernel_size=(1, 2, 2))
 
-        self.convlstm1 = ConvLSTM(input_dim=input_dim, device=device, hidden_dim=8, kernel_size=(3, 3), num_layers=1, batch_first=True)
-        self.bn1 = nn.BatchNorm3d(8).to(device)
-        self.pool1 = nn.MaxPool3d(kernel_size=(1, 2, 2)).to(device)
+        self.convlstm2 = ConvLSTM(input_dim=8, hidden_dim=16, kernel_size=(3, 3), num_layers=1, batch_first=True)
+        self.bn2 = nn.BatchNorm3d(16)
+        self.pool2 = nn.MaxPool3d(kernel_size=(1, 2, 2))
 
-        self.convlstm2 = ConvLSTM(input_dim=8, device=device, hidden_dim=16, kernel_size=(3, 3), num_layers=1, batch_first=True)
-        self.bn2 = nn.BatchNorm3d(16).to(device)
-        self.pool2 = nn.MaxPool3d(kernel_size=(1, 2, 2)).to(device)
+        self.convlstm3 = ConvLSTM(input_dim=16, hidden_dim=32, kernel_size=(3, 3), num_layers=1, batch_first=True)
+        self.bn3 = nn.BatchNorm3d(32)
+        self.pool3 = nn.MaxPool3d(kernel_size=(1, 2, 2))
 
-        self.convlstm3 = ConvLSTM(input_dim=16, device=device, hidden_dim=32, kernel_size=(3, 3), num_layers=1, batch_first=True)
-        self.bn3 = nn.BatchNorm3d(32).to(device)
-        self.pool3 = nn.MaxPool3d(kernel_size=(1, 2, 2)).to(device)
+        self.convlstm4 = ConvLSTM(input_dim=32, hidden_dim=64, kernel_size=(3, 3), num_layers=1, batch_first=True)
+        self.bn4 = nn.BatchNorm3d(64)
+        self.pool4 = nn.MaxPool3d(kernel_size=(1, 2, 2))
 
-        self.convlstm4 = ConvLSTM(input_dim=32, device=device, hidden_dim=64, kernel_size=(3, 3), num_layers=1, batch_first=True)
-        self.bn4 = nn.BatchNorm3d(64).to(device)
-        self.pool4 = nn.MaxPool3d(kernel_size=(1, 2, 2)).to(device)
-
-        self.fc1 = nn.Linear(1024, 128).to(device)
-        self.drop = nn.Dropout(0.5).to(device)
-        self.fc2 = nn.Linear(128, 2).to(device)
-        get_summary(self)
+        self.fc1 = nn.Linear(1024, 128)
+        self.drop = nn.Dropout(0.5)
+        self.fc2 = nn.Linear(128, 2) 
 
     def forward(self, x):
         x, _ = self.convlstm1(x)
@@ -274,12 +268,12 @@ class Baseline_3ET(nn.Module):
         y = y.permute(1, 0, 2)
         return y
 
+
 if __name__ == "__main__":
     import torch
     from thop import profile
-
-    # Assuming 'Baseline_3ET' is the model class and 'device' is defined
-    model = Baseline_3ET(64, 64, 1, torch.device("cuda"))  # Create an instance of the model
-    input_tensor = torch.randn(1, 2, 1, 64, 64).to(torch.device("cuda"))  # Define an example input tensor
+ 
+    model = Baseline_3ET(64, 64, 1)
+    input_tensor = torch.randn(1, 2, 1, 64, 64)
     macs, params = profile(model, inputs=(input_tensor,))
     print(f"Number of MAC operations: {macs}")

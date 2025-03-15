@@ -1,0 +1,75 @@
+training_params:
+  # training setting
+  arch_name: retina_ann # ["retina_snn", "retina_ann", "3et"]
+  lr_model: 0.001
+  num_epochs: 1
+  batch_size: 1
+  optimizer: Adam
+  scheduler: StepLR
+
+  # spiking-params 
+  lr_model_lpf:  0.0001
+  lr_model_lpf_tau: 0.001
+  lpf_tau_mem_syn: [5.0, 5.0]
+  lpf_kernel_size: 30
+  lpf_init: 0.01
+  lpf_train: true 
+  reset_states_sinabs: true
+  w_spike_loss: 0
+  w_synap_loss: 0
+  spike_multi: false
+  spike_reset: false
+  spike_surrogate: true
+  spike_window: 0.5
+  synops_lim: [1000, 1000000]
+  w_input_loss: 0
+  w_fire_loss: 0
+  firing_lim: [0.3, 0.4] 
+  verify_hardware_compatibility: false
+
+  # losses
+  w_euclidian_loss: 1 
+  w_box_loss: 7.5
+  w_conf_loss: 1.5 
+  SxS_Grid: 4
+  num_classes: 0
+  num_boxes: 2
+  bbox_w: 5
+
+dataset_params:
+  # dataset settings
+  dataset_name: ini-30 # ["ini-30", "3et-data"]
+  ini30_val_idx: 1 
+
+  # input shape
+  num_bins: 20
+  input_channel: 2
+  img_width: 64
+  img_height: 64
+
+  # custom loader settings
+  events_per_frame: 300
+  events_per_step: 20
+  fixed_window: false
+  fixed_window_dt: 2500
+
+  # data augmentations
+  shuffle: true
+  spatial_factor: 0.25
+  center_crop: true
+  uniform_noise: false
+  event_drop: false
+  time_jitter: false
+  pre_decimate: false
+  pre_decimate_factor: 4
+  decimation_rate: 1
+  denoise_evs: false
+  random_flip: false
+
+quant_params:
+  # quantization settings
+  a_bit: 32
+  w_bit: 32
+  all_positive: false
+  per_channel: true
+  quant_inference: true 

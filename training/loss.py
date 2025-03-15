@@ -24,10 +24,11 @@ def intersection_over_union(boxes_preds, boxes_labels):
     box1_y1 = boxes_preds[..., 1:2]
     box1_x2 = boxes_preds[..., 2:3]
     box1_y2 = boxes_preds[..., 3:4]
+
     box2_x1 = boxes_labels[..., 0:1]
     box2_y1 = boxes_labels[..., 1:2]
     box2_x2 = boxes_labels[..., 2:3]
-    box2_y2 = boxes_labels[..., 3:4]
+    box2_y2 = boxes_labels[..., 3:4] 
 
     x1 = torch.max(box1_x1, box2_x1)
     y1 = torch.max(box1_y1, box2_y1)
@@ -44,14 +45,13 @@ def intersection_over_union(boxes_preds, boxes_labels):
 
 
 class EuclidianLoss(nn.Module):
-    def __init__(self, training_with_mem):
+    def __init__(self):
         super(EuclidianLoss, self).__init__()
         # Save last predictions and targets for loggings
         self.memory = {
             "points": {"target": None, "pred": None},
             "box": {"target": None, "pred": None},
-        }
-        self.training_with_mem = training_with_mem
+        } 
 
     def forward(self, outputs, labels):
         labels = labels.flatten(end_dim=1)
@@ -269,9 +269,9 @@ class YoloLoss(nn.Module):
         self.mse = nn.MSELoss(reduction="none")
 
         """
-        S is split size of image (in paper 7),
-        B is number of boxes (in paper 2),
-        C is number of classes (WiderFace is 1),
+        S is split size of image
+        B is number of boxes
+        C is number of classes
         """
         self.S = training_params["SxS_Grid"]
         self.B = training_params["num_boxes"]

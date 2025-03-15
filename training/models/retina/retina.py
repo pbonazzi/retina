@@ -1,18 +1,15 @@
 import torch, pdb
 import torch.nn as nn
+
 import sinabs
 import sinabs.activation as sina
 
-from training.models.utils import get_summary
-from training.models.blocks.decimation import DecimationLayer
-
+from ..spiking.decimation import DecimationLayer
+from ..binarization.binary_operator import DoReFaConv2d, DoReFaLinear 
 
 class Retina(nn.Module):
     def __init__(self, dataset_params, training_params, layers_config):
         super(Retina, self).__init__()
-
-        self.train_with_mem = training_params["train_with_mem"]
-        self.train_with_exodus = training_params["train_with_exodus"]
 
         # data configs
         self.num_bins = dataset_params["num_bins"]
@@ -24,21 +21,22 @@ class Retina(nn.Module):
         self.training_params = training_params
 
         # spiking layer activations
-        spike_fn = (
-            sina.MultiSpike if training_params["spike_multi"] else sina.SingleSpike
-        )
-        spike_reset = (
-            sina.MembraneReset()
-            if training_params["spike_reset"]
-            else sina.MembraneSubtract()
-        )
-        spike_grad = sina.Heaviside(window=training_params["spike_window"])
-        if training_params["spike_surrogate"]:
-            spike_grad = (
-                sina.PeriodicExponential()
-                if training_params["spike_multi"]
-                else sina.SingleExponential()
+        if self.training_params["arch_name"] =="retina_snn":
+            spike_fn = (
+                sina.MultiSpike if training_params["spike_multi"] else sina.SingleSpike
             )
+            spike_reset = (
+                sina.MembraneReset()
+                if training_params["spike_reset"]
+                else sina.MembraneSubtract()
+            )
+            spike_grad = sina.Heaviside(window=training_params["spike_window"])
+            if training_params["spike_surrogate"]:
+                spike_grad = (
+                    sina.PeriodicExponential()
+                    if training_params["spike_multi"]
+                    else sina.SingleExponential()
+                )
 
         # modules initialization
         modules = []
@@ -74,6 +72,29 @@ class Retina(nn.Module):
                 # weights init
                 torch.nn.init.xavier_uniform_(modules[-1].weight)
 
+            elif layer["name"] == "DoReFaConv2d":
+                # input dimensions
+                print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in)
+                modules.append(
+                    DoReFaConv2d(
+                        in_channels=c_in,
+                        out_channels=layer["out_dim"],
+                        kernel_size=(layer["k_xy"], layer["k_xy"]),
+                        stride=(layer["s_xy"], layer["s_xy"]),
+                        padding=(layer["p_xy"], layer["p_xy"]),
+                        bias=False,
+                    )
+                )
+
+                # out dimensions
+                c_in = layer["out_dim"]
+                c_x = ((c_x - layer["k_xy"] + 2 * layer["p_xy"]) // layer["s_xy"]) + 1
+                c_y = ((c_y - layer["k_xy"] + 2 * layer["p_xy"]) // layer["s_xy"]) + 1
+                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in)
+
+                # weights init
+                torch.nn.init.xavier_uniform_(modules[-1].weight)
+            
             elif layer["name"] == "ReLu":
                 modules.append(nn.ReLU())
 
@@ -96,6 +117,18 @@ class Retina(nn.Module):
 
                 # out dimensions
                 c_in = c_x * c_y * c_in
+
+            elif layer["name"] == "DoReFaLinear":
+                # input dimensions
+                print(layer["name"], " in: \n ", c_in)
+                modules.append(DoReFaLinear(in_features=c_in, out_features=layer["out_dim"], bias=False))
+
+                # out dimensions
+                print(layer["name"], " out: \n ", layer["out_dim"])
+                c_in = layer["out_dim"]
+
+                # weights init
+                torch.nn.init.xavier_uniform_(modules[-1].weight)
 
             elif layer["name"] == "Linear":
                 # input dimensions
@@ -130,7 +163,7 @@ class Retina(nn.Module):
                         num_timesteps=self.num_bins,
                         tau_syn=layer["tau_syn"],
                         spike_threshold=layer["spike_threshold"],
-                        record_states=self.train_with_mem,
+                        record_states=True,
                         min_v_mem=layer["min_v_mem"],
                     )
                 )
@@ -147,34 +180,20 @@ class Retina(nn.Module):
             else:
                 raise NotImplementedError("Unknown Layer")
 
-        self.seq = nn.Sequential(*modules)
-        # print("Number of MAC", self.compute_mac_operations())
-        get_summary(self)
-
-    def compute_mac_operations(self):
-        total_mac_ops = 0
-        input_size = (
-            self.training_params["batch_size"] * self.num_bins,
-            self.input_channel,
-            self.img_width,
-            self.img_height,
-        )
-        with torch.no_grad():
-            x = torch.zeros(*input_size)
-            for module in self.seq:
-                x = module(x)
-                if isinstance(module, nn.Conv2d):
-                    total_mac_ops += (
-                        module.in_channels
-                        * module.out_channels
-                        * module.kernel_size[0] ** 2
-                        * x.size(-1)
-                        * x.size(-2)
-                    )
-                elif isinstance(module, nn.Linear):
-                    total_mac_ops += module.in_features * module.out_features
-
-        return total_mac_ops
+        self.seq_model = nn.Sequential(*modules) 
 
     def forward(self, x):
-        return self.seq(x)
+        return self.seq_model(x)
+
+
+
+if __name__ == "__main__":
+    import torch 
+    from .helper import get_retina_model_configs
+    
+    params = load_yaml_config("configs/default.yaml")
+    training_params = params["training_params"]
+    dataset_params = params["dataset_params"] 
+    quant_params = params["quant_params"] 
+    layers_config = get_retina_model_configs(dataset_params, training_params, quant_params)
+    model = Retina(dataset_params, training_params, layers_config) 

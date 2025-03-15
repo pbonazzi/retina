@@ -6,8 +6,7 @@ import os
 
 class LPFOnline(nn.Module):
     def __init__(
-        self,
-        device: torch.device,
+        self, 
         num_channels: int,
         kernel_size: int,
         path_to_image: str,
@@ -16,11 +15,10 @@ class LPFOnline(nn.Module):
         initial_scale: float = 0.012,
         train_scale: bool = False 
     ):
-        super().__init__()  
-        self.device = device
-        self.scale_factor = nn.Parameter(torch.tensor(initial_scale, device=device),  requires_grad=train_scale)
-        self.tau_mem = nn.Parameter(torch.tensor(tau_mem, device=device),  requires_grad=False)
-        self.tau_syn = nn.Parameter(torch.tensor(tau_syn, device=device),  requires_grad=False)
+        super().__init__()   
+        self.scale_factor = nn.Parameter(torch.tensor(initial_scale),  requires_grad=train_scale)
+        self.tau_mem = nn.Parameter(torch.tensor(tau_mem),  requires_grad=False)
+        self.tau_syn = nn.Parameter(torch.tensor(tau_syn),  requires_grad=False)
         #kernel = self.set_low_pass_kernel(kernel_size, tau_mem, tau_syn)
 
         self.kernel_size = kernel_size
@@ -89,25 +87,27 @@ class LPFOnline(nn.Module):
 
     def reset_past(self, shape=None):
         shape = shape or self.past_inputs.shape
-        self.past_inputs = torch.zeros(shape, device=self.device)
+        self.past_inputs = torch.zeros(shape)
 
     def forward(self, x, padding_mode="past"):
         # Expect (N=self.output_dim, ...., T=100)
         original_shape = x.shape
         x = x.reshape(x.shape[0], -1, x.shape[-1])  
+        self.past_inputs = self.past_inputs.to(x.device)
 
-        syn_kernel = torch.exp(-torch.arange(self.kernel_size) / self.tau_syn).unsqueeze(0).unsqueeze(0)
-        mem_kernel = torch.exp(-torch.arange(self.kernel_size) / self.tau_mem).unsqueeze(0).unsqueeze(0)
+        syn_kernel = torch.exp(-torch.arange(self.kernel_size).to(x.device) / self.tau_syn).unsqueeze(0).unsqueeze(0)
+        mem_kernel = torch.exp(-torch.arange(self.kernel_size).to(x.device) / self.tau_mem).unsqueeze(0).unsqueeze(0)
         padding = torch.zeros_like(syn_kernel)
-        syn_kernel = torch.cat((padding, syn_kernel), -1) 
+        syn_kernel = torch.cat((padding, syn_kernel), -1).to(x.device) 
         kernel = torch.nn.functional.conv1d(syn_kernel.flip(-1), mem_kernel.flip(-1))[..., :-1]
         self.pad_size = kernel.shape[-1] - 1
 
         if (shape := x.shape[:-1]) != self.past_inputs.shape[:-1]:
             self.reset_past(shape=(*shape, self.pad_size))
 
-        if padding_mode=="past":
-            padded = torch.cat((self.past_inputs, x), -1)  
+        if padding_mode=="past": 
+            padded = torch.cat((self.past_inputs.to(x.device), x), -1)  
+            pdb.set_trace()
             convd = torch.nn.functional.conv1d( padded,  kernel.flip(-1).repeat(self.num_channels, 1, 1),
                                                 groups=self.num_channels, 
                                                 bias=None, stride=1, padding=0, dilation=1) * self.scale_factor 

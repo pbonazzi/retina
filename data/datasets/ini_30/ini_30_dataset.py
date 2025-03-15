@@ -12,23 +12,24 @@ import time
 import numpy as np
 import pandas as pd
 from PIL import Image
-from data.ini_30_aeadat_processor import read_csv, AedatProcessorLinear
+from dotenv import load_dotenv
 import tonic
 from tonic.io import make_structured_array
+
+from data.datasets.ini_30.ini_30_aeadat_processor import read_csv, AedatProcessorLinear
+
+load_dotenv() 
 
 
 class Ini30Dataset:
     def __init__(
         self,
         training_params,
-        dataset_params,
-        shuffle,
+        dataset_params, 
         list_experiments: list,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
-    ):
-        self.shuffle = shuffle
-        self.device = torch.device("cuda")
+    ):  
         # Transforms
         self.transform = transform
         self.target_transform = target_transform
@@ -40,8 +41,7 @@ class Ini30Dataset:
         self.fixed_window = dataset_params["fixed_window"]
         self.fixed_window_dt = dataset_params["fixed_window_dt"]
 
-        self.decimation_rate = training_params["decimation_rate"]
-        self.data_dir = dataset_params["data_dir"] 
+        self.data_dir = os.getenv("INI30_DATA_PATH")
         self.input_channel = dataset_params["input_channel"]
         self.img_width = dataset_params["img_width"]
         self.img_height = dataset_params["img_height"]
@@ -192,7 +192,7 @@ class Ini30Dataset:
             # move pointers
             start_idx += t.shape[0]
 
-        frames = torch.rot90(torch.tensor(data).to(self.device), k=2, dims=(2, 3))
+        frames = torch.rot90(torch.tensor(data), k=2, dims=(2, 3))
         frames = frames.permute(0, 1, 3, 2) 
         labels = self.target_transform(np.vstack([x_axis, y_axis]))
 
@@ -291,7 +291,7 @@ class Ini30Dataset:
                         + labels.iloc[idx]["center_y"] * weight1
                     )
                 )
-        frames = torch.rot90(torch.tensor(data).to(self.device), k=2, dims=(2, 3))
+        frames = torch.rot90(torch.tensor(data), k=2, dims=(2, 3))
         frames = frames.permute(0, 1, 3, 2)
         x_axis.reverse()
         y_axis.reverse()
@@ -337,7 +337,10 @@ class Ini30Dataset:
         else:
             events, labels, avg_dt = self.load_dynamic_window(events, labels)
 
-        event_tensor = events.float().cuda()
-        labels_tensor = labels.float().cuda()
+        event_tensor = events.float()
+        labels_tensor = labels.float() 
+        
+        if event_tensor.shape[1] == 1:
+            event_tensor = 1 - event_tensor
 
         return event_tensor, labels_tensor, avg_dt

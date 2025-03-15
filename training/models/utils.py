@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import sinabs
 import pdb
 try:
@@ -7,138 +8,75 @@ try:
 except:
     exodus_installed = False
 
-from training.models.blocks.decimation import DecimationLayer
-
-def get_model_for_baseline(dataset_params, training_params):
-    layers_config = [
-                # Layer 0
-                {
-                    "name": "Input",
-                    "img_width": dataset_params["img_width"],
-                    "img_height": dataset_params["img_height"],
-                    "input_channel": dataset_params["input_channel"],
-                },
-                {"name": "Decimation", "decimation_rate": training_params["decimation_rate"]},
-                # Layer 1
-                {"name": "Conv", "out_dim": 16, "k_xy": 3, "s_xy": 2, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                {"name": "SumPool", "k_xy": 2, "s_xy": 2},
-                # Layer 2
-                {"name": "Conv", "out_dim": 64, "k_xy": 3, "s_xy": 2, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                {"name": "SumPool", "k_xy": 16, "s_xy": 2},
-                # Layer 3
-                {"name": "Conv", "out_dim": 64, "k_xy": 3, "s_xy": 2, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                {"name": "SumPool", "k_xy": 2, "s_xy": 2},
-                # Layer 4
-                {"name": "Conv", "out_dim": 128, "k_xy": 3, "s_xy": 2, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                # Layer 5
-                {"name": "Conv", "out_dim": 128, "k_xy": 3, "s_xy": 2, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                # Layer 6
-                {"name": "Conv", "out_dim": 256, "k_xy": 3, "s_xy": 2, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                # Layer 7
-                {"name": "Flat"},
-                {"name": "Linear", "out_dim": 512},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                # Layer 8
-                {"name": "Linear", "out_dim": training_params["output_dim"]},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-            ]
-
-    return layers_config
-
-def get_model_for_speck(dataset_params, training_params):
-    
-    layers_config = [
-                # Layer 0
-                {
-                    "name": "Input",
-                    "img_width": dataset_params["img_width"],
-                    "img_height": dataset_params["img_height"],
-                    "input_channel": dataset_params["input_channel"],
-                },
-                {"name": "Decimation", "decimation_rate": training_params["decimation_rate"]},
-                # Layer 1
-                {"name": "Conv", "out_dim": 16, "k_xy": 5, "s_xy": 2, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                {"name": "SumPool", "k_xy": 2, "s_xy": 2},
-                # Layer 2
-                {"name": "Conv", "out_dim": 64, "k_xy": 3, "s_xy": 1, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                {"name": "SumPool", "k_xy": 2, "s_xy": 2},
-                # Layer 3
-                {"name": "Conv", "out_dim": 16, "k_xy": 3, "s_xy": 1, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                {"name": "SumPool", "k_xy": 2, "s_xy": 2},
-                # Layer 4
-                {"name": "Conv", "out_dim": 16, "k_xy": 3, "s_xy": 1, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                # Layer 5
-                {"name": "Conv", "out_dim": 8, "k_xy": 3, "s_xy": 1, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                # Layer 6
-                {"name": "Conv", "out_dim": 16, "k_xy": 3, "s_xy": 1, "p_xy": 1},
-                {"name": "BatchNorm"},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                # Layer 7
-                {"name": "Flat"},
-                {"name": "Linear", "out_dim": 128},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-                # Layer 8
-                {"name": "Linear", "out_dim": training_params["output_dim"]},
-                {"name": "IAF", "tau_syn": None, "spike_threshold": 1, "min_v_mem": -1.0},
-            ]
-
-    return layers_config
 
 
 def compute_output_dim(training_params):
     # select loss
-    if training_params["yolo_loss"]:
+    if training_params["arch_name"][:6] == "retina":
         output_dim  = training_params["SxS_Grid"]  * training_params["SxS_Grid"] \
-            *(training_params["num_classes"] + training_params["num_boxes"] * 5)
-    elif training_params["focal_loss"]:
-        output_dim = 4
+            *(training_params["num_classes"] + training_params["num_boxes"] * 5) 
     else:
         output_dim  = 2
     return output_dim
 
-def get_summary(model):
+def estimate_activations_size(x):
     """
-    Prints model memory
+    Recursively computes the total number of elements across all tensors in
+    a nested structure (lists, tuples).
     """
-    param_size = 0
-    for param in model.parameters():
-        param_size += param.nelement() * param.element_size()
-    buffer_size = 0
-    for buffer in model.buffers():
-        buffer_size += buffer.nelement() * buffer.element_size()
+    num_activations = 0
 
-    size_all_kb = ((param_size + buffer_size) / 1024**2)*1000
-    print('Model size: {:.1f}KB'.format(size_all_kb))
+    if isinstance(x, torch.Tensor):
+        # If it's a tensor, just add its numel
+        num_activations += x.numel()
+    elif isinstance(x, (tuple, list)):
+        # If it's a tuple or list, iterate through its elements
+        for item in x:
+            num_activations += estimate_activations_size(item)
+    
+    return num_activations
 
-    # Count the number of layers
-    num_layers = sum(1 for _ in model.modules()) - 1
-    print(f"Number of layers: {num_layers}")
+def estimate_model_size(model, input_tensor):
+    """
+    Estimate the total activation size of the model for a given input tensor.
+    
+    Parameters:
+    - model: PyTorch model (e.g., Baseline_3ET)
+    - input_tensor: Tensor with shape (batch_size, time_steps, channels, height, width)
+    
+    Returns:
+    - total_activations: Total number of activations in the model.
+    """
+    # modules
+    from training.models.spiking.decimation import DecimationLayer
+    from .baseline_3et import ConvLSTM
+    from .binarization.binary_operator import DoReFaConv2d, DoReFaLinear
 
-    # Count the number of parameters
-    num_params = sum(p.numel() for p in model.parameters())
-    print(f"Number of parameters: {num_params}") 
+    # accumulate activatioms
+    total_activations = 0
+    
+    # Define a hook function to calculate the activations at each layer
+    def hook_fn(module, input, output):
+        nonlocal total_activations
+        # Calculate the number of activations for this layer
+        total_activations += estimate_activations_size(output)  # numel returns the total number of elements in the tensor
+    
+    # Recursively register hooks for all submodules
+    def register_hooks(module):
+        if isinstance(module, (ConvLSTM, nn.BatchNorm3d, nn.MaxPool3d, nn.Dropout, nn.Linear, nn.Conv2d, DoReFaConv2d, DoReFaLinear, nn.BatchNorm2d)):
+            module.register_forward_hook(hook_fn)
+        for child in module.children():
+            register_hooks(child)
+    
+    # Register hooks at all levels of the model
+    register_hooks(model)
+    
+    # Perform a forward pass with the given input tensor to trigger the hooks
+    with torch.no_grad():
+        model(input_tensor)
+
+    return total_activations
+
 
 def convert_exodus_to_sinabs(snn_model):
     if exodus_installed:

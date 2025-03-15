@@ -57,15 +57,16 @@ cd retina
 ### Create the environment
 
 ```
-conda create -n retina python=3.10 numpy=1.8.1
-conda activate retina
-pip install -r requirements.txt
-pip install git+https://gitlab.com/inivation/dv/dv-processing.git
+conda create -n retina python=3.10 -y
+conda activate retina 
+pip install -r requirements.txt 
 ```
 
 ### Downloads
 
-Click  [here](https://zenodo.org/records/11203260?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImEzYmE4ZTI4LTU2NDQtNDhiNC05YjcxLTYyZjRiNzNhYzU2MCIsImRhdGEiOnt9LCJyYW5kb20iOiI0MmY3NDgwOTZiZDM4YWM2NDhmNTk4ZTc5MDMxYTg2NiJ9.oyQ8cMq0xVIoCC0JLpnLIUWnsSVVJS91dzZJkwqTmTgaETtkTJqL7qBCu6Nz9bBdR1IhUGViAOSpTc6Z02ja5Q) to download the dataset.
+
+#### Datasets
+Click  [here](https://zenodo.org/records/11203260?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImEzYmE4ZTI4LTU2NDQtNDhiNC05YjcxLTYyZjRiNzNhYzU2MCIsImRhdGEiOnt9LCJyYW5kb20iOiI0MmY3NDgwOTZiZDM4YWM2NDhmNTk4ZTc5MDMxYTg2NiJ9.oyQ8cMq0xVIoCC0JLpnLIUWnsSVVJS91dzZJkwqTmTgaETtkTJqL7qBCu6Nz9bBdR1IhUGViAOSpTc6Z02ja5Q) to download the Ini-30 Dataset.
 
 Verify the structure:
 
@@ -78,13 +79,35 @@ Verify the structure:
 ├── silver.csv
 ```
 
+Follow the instruction [here](https://github.com/qinche106/cb-convlstm-eyetracking) to download the 3ET Dataset
+
+Rename `.env.example` to `.env` and change its `INI30_DATA_PATH` and `3ET_DATA_PATH`.
+
+
+#### Models
+
 Click [here](https://zenodo.org/records/13341299) to download a pretrained model. 
 
 
 ## Training
-See the list of arguments in the launch_fire function. The `run-name` has the format `version-name`.
+See the list of arguments in the launch_fire function and the `config/defaults.yaml`.
 
 ```
-python train.py --run-name="1-train" 
+python3 -m scripts.train --run_name="experiment" 
+```
+
+## Deployment 
+
+Install dependencies for TFlite
+
+```
+pip install onnx2tf onnx-tf tensorflow onnx_graphsurgeon tf_keras
+```
+
+Quantiazation INT8 : Example for 3et_on_ini30
+
+```
+onnx2tf -i output/experiment/models/model.onnx -o output/experiment/models/model_tf
+python3 -m scripts.quantize
 ```
 
