@@ -93,7 +93,7 @@ Click [here](https://zenodo.org/records/13341299) to download a pretrained model
 See the list of arguments in the launch_fire function and the `config/defaults.yaml`.
 
 ```
-python3 -m scripts.train --run_name="experiment" 
+python3 -m scripts.train --run_name="retina-ann" 
 ```
 
 ## Deployment 

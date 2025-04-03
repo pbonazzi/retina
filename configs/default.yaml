@@ -3,7 +3,7 @@ training_params:
   arch_name: retina_ann # ["retina_snn", "retina_ann", "3et"]
   lr_model: 0.001
   num_epochs: 1
-  batch_size: 1
+  batch_size: 64
   optimizer: Adam
   scheduler: StepLR
 
@@ -39,7 +39,7 @@ training_params:
 dataset_params:
   # dataset settings
   dataset_name: ini-30 # ["ini-30", "3et-data"]
-  ini30_val_idx: 1 
+  ini30_val_idx: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29] 
 
   # input shape
   num_bins: 20

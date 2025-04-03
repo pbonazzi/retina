@@ -1,5 +1,0 @@
-a_bit: 32
-all_positive: false
-per_channel: true
-quant_inference: true
-w_bit: 32

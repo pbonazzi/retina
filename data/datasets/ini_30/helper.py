@@ -40,14 +40,13 @@ def get_ini_30_dataset(name, training_params, dataset_params):
 def get_indexes(name, val_idx): 
 
     if name=="val":
-        return [val_idx]
+        return val_idx
 
     elif name=="train":
         all_idxs = list(range(0, 30)) 
-        all_idxs.remove(val_idx)
+        for idx in val_idx:
+            all_idxs.remove(idx) 
         return all_idxs 
-
-
 
 if __name__ == "__main__":
 

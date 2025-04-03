@@ -28,7 +28,7 @@ paths = {
 
 def launch_fire(
     # generic 
-    num_workers=1,
+    num_workers=4,
     device=1,
     wandb_mode="run",  # ["disabled", "run"]
     project_name="event_eye_tracking",
@@ -76,7 +76,6 @@ def launch_fire(
         if training_params["arch_name"][:6] =="retina":
             layers_config = get_retina_model_configs(dataset_params, training_params, quant_params)
             yaml.dump(layers_config, open(f"{out_dir}/layer_configs.yaml", "w"))
-
 
     # LOAD DATASET
     input_shape = (
@@ -146,11 +145,12 @@ def launch_fire(
     if path_to_run != None:
         trainer.load(path_to_run)
 
-    example_input = torch.ones(training_params["batch_size"] * dataset_params["num_bins"], *input_shape)
-    torch.onnx.export(model, example_input, os.path.join(out_dir, "models", "model.onnx"), input_names=['input'], output_names=['output'], opset_version=11)
 
     trainer.fit(training_module, datamodule=data_module)
     trainer.validate(training_module, dataloaders=data_module.val_dataloader())
+
+    example_input = torch.ones(training_params["batch_size"] * dataset_params["num_bins"], *input_shape)
+    torch.onnx.export(model, example_input, os.path.join(out_dir, "models", "model.onnx"), input_names=['input'], output_names=['output'], opset_version=11)
 
 
 if __name__ == "__main__":
