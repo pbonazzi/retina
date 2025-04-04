@@ -107,7 +107,7 @@ pip install onnx2tf onnx-tf tensorflow onnx_graphsurgeon tf_keras
 Quantiazation INT8 : Example for 3et_on_ini30
 
 ```
-onnx2tf -i output/experiment/models/model.onnx -o output/experiment/models/model_tf
+onnx2tf -i output/retina_ann/models/model.onnx -o output/retina_ann/models/model_tf
 python3 -m scripts.quantize
 ```
 

@@ -7,7 +7,7 @@ from data.module import EyeTrackingDataModule
 from data.utils import load_yaml_config
 
 # Path
-path_to_run = "./output/experiment/"
+path_to_run = "./output/retina-ann/"
 
 # Load dataset params
 training_params = load_yaml_config(os.path.join(path_to_run, "training_params.yaml"))
@@ -19,11 +19,13 @@ sampler = RandomSampler(data_module.train_dataset, replacement=True, num_samples
 train_dataloader = data_module.train_dataloader(sampler)
 
 def representative_dataset():
+    step = 0  # Initialize step counter
     for input_data, _ in train_dataloader:  
-        input_data = input_data.detach().cpu().numpy().astype(np.float32)  # Convert PyTorch tensor to NumPy
-        print(f"Step {step}: Input shape = {input_data.shape}")  # Debugging: Check shape
-        yield [input_data]  # Wrap in a list for TensorFlow compatibility
-
+        input_data = input_data.detach().cpu().numpy().astype(np.float32)
+        print(f"Step {step}: Input shape = {input_data.shape}")  # Debugging
+        step += 1
+        yield [input_data]  
+        
 # Test
 model = tf.saved_model.load(os.path.join(path_to_run,"models/model_tf"))
 concrete_func = model.signatures["serving_default"]

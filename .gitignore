@@ -1,5 +1,5 @@
 # Additional files to ignore for the retina project
-output
+output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
