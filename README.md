@@ -86,7 +86,7 @@ Rename `.env.example` to `.env` and change its `INI30_DATA_PATH` and `3ET_DATA_P
 
 #### Models
 
-Click [here](https://zenodo.org/records/13341299) to download a pretrained model. 
+Click [here](https://zenodo.org/records/15143697) to download a pretrained model. 
 
 
 ## Training
