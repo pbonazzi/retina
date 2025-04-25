@@ -39,10 +39,11 @@ class EyeTrackingModelModule(pl.LightningModule):
             ).to(self.device)
 
         # Loss initialization
-        if self.training_params["arch_name"] == "3et":
+        if self.training_params["arch_name"] == "3et" or (not self.training_params["use_yolo_loss"]):
             self.euclidian_error = EuclidianLoss()
         else:
             self.yolo_error = YoloLoss(dataset_params, training_params) 
+            
         if self.training_params["arch_name"] =="retina_snn":
             spiking_thresholds = get_spiking_threshold_list(self.model.spiking_model)
             self.speck_loss = SpeckLoss(
@@ -56,8 +57,8 @@ class EyeTrackingModelModule(pl.LightningModule):
             )
 
     def forward(self, x):  
-        if self.training_params["arch_name"][:6]=="retina":
-            x = x.view(-1, x.size(2), x.size(3), x.size(4))
+        if self.training_params["arch_name"][:6] =="retina":
+            x = x.view(-1, x.size(2), x.size(3), x.size(4)) 
             if self.training_params["arch_name"] =="retina_snn":
                 return self.model.spiking_model(x)   
         return self.model(x) 
@@ -139,7 +140,7 @@ class EyeTrackingModelModule(pl.LightningModule):
         output_dict = {}
 
         # Euclidian Loss
-        if self.training_params["arch_name"] == "3et":
+        if self.training_params["arch_name"] == "3et" or (not self.training_params["use_yolo_loss"]):
             loss_dict.update(self.euclidian_error(outputs, labels))
             output_dict["memory"] = self.euclidian_error.memory
 

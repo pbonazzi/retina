@@ -1,11 +1,15 @@
 import torch, pdb
 import torch.nn as nn
 
+from pytorch_tcn import TemporalConv1d
+
 import sinabs
 import sinabs.activation as sina
 
 from ..spiking.decimation import DecimationLayer
 from ..binarization.binary_operator import DoReFaConv2d, DoReFaLinear 
+
+from data.utils import load_yaml_config
 
 class Retina(nn.Module):
     def __init__(self, dataset_params, training_params, layers_config):
@@ -48,6 +52,24 @@ class Retina(nn.Module):
                     layer["input_channel"],
                 )
                 print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in)
+
+            elif layer["name"] == "TemporalConv":
+                # input dimensions
+                print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in)
+                modules.append(
+                    TemporalConv1d(
+                        in_channels=c_in,
+                        out_channels=layer["out_dim"],
+                        kernel_size=layer["k_xy"],
+                        stride=layer["s_xy"], 
+                        casual=True
+                    )
+                )
+
+                # out dimensions
+                c_in = layer["out_dim"]
+                c_x = (c_x - (layer["k_xy"] - 1) * layer["p_xy"]) // layer["s_xy"] + 1
+                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in)
 
             elif layer["name"] == "Conv":
                 # input dimensions
@@ -95,28 +117,6 @@ class Retina(nn.Module):
                 # weights init
                 torch.nn.init.xavier_uniform_(modules[-1].weight)
             
-            elif layer["name"] == "ReLu":
-                modules.append(nn.ReLU())
-
-            elif layer["name"] == "BatchNorm":
-                modules.append(nn.BatchNorm2d(c_in))
-
-            elif layer["name"] == "AvgPool":
-                # input dimensions
-                print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in)
-                modules.append(nn.AvgPool2d(layer["k_xy"], layer["s_xy"]))
-
-                # out dimensions
-                c_x, c_y = (c_x - layer["k_xy"]) // layer["s_xy"] + 1, (
-                    c_y - layer["k_xy"]
-                ) // layer["s_xy"] + 1
-                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in)
-
-            elif layer["name"] == "Flat":
-                modules.append(nn.Flatten())
-
-                # out dimensions
-                c_in = c_x * c_y * c_in
 
             elif layer["name"] == "DoReFaLinear":
                 # input dimensions
@@ -142,6 +142,24 @@ class Retina(nn.Module):
                 # weights init
                 torch.nn.init.xavier_uniform_(modules[-1].weight)
 
+
+            elif layer["name"] == "ReLu":
+                modules.append(nn.ReLU())
+
+            elif layer["name"] == "BatchNorm":
+                modules.append(nn.BatchNorm2d(c_in))
+
+            elif layer["name"] == "AvgPool":
+                # input dimensions
+                print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in)
+                modules.append(nn.AvgPool2d(layer["k_xy"], layer["s_xy"]))
+
+                # out dimensions
+                c_x, c_y = (c_x - layer["k_xy"]) // layer["s_xy"] + 1, (
+                    c_y - layer["k_xy"]
+                ) // layer["s_xy"] + 1
+                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in)
+
             elif layer["name"] == "SumPool":
                 # input dimensions
                 print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in)
@@ -152,7 +170,13 @@ class Retina(nn.Module):
                     c_y - layer["k_xy"]
                 ) // layer["s_xy"] + 1
                 print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in)
+                
+            elif layer["name"] == "Flat":
+                modules.append(nn.Flatten())
 
+                # out dimensions
+                c_in = c_x * c_y * c_in
+                
             elif layer["name"] == "IAF":
                 modules.append(
                     sinabs.layers.IAFSqueeze(

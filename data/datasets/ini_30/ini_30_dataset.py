@@ -36,8 +36,7 @@ class Ini30Dataset:
 
         # Parameters
         self.num_bins = dataset_params["num_bins"]
-        self.events_per_frame = dataset_params["events_per_frame"]
-        self.events_per_step = dataset_params["events_per_step"]
+        self.events_per_frame = dataset_params["events_per_frame"] 
         self.fixed_window = dataset_params["fixed_window"]
         self.fixed_window_dt = dataset_params["fixed_window_dt"]
 
@@ -128,9 +127,7 @@ class Ini30Dataset:
         evs_p, evs_xy = data["p"][-evs_t.shape[0] :], data["xy"][-evs_t.shape[0] :, :]
 
         # frame
-        data = np.zeros(
-            (self.num_bins, self.input_channel, self.img_width, self.img_height)
-        )
+        data = np.zeros((self.num_bins, self.input_channel, self.img_width, self.img_height))
 
         # indexes
         start_idx = 0

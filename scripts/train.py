@@ -11,7 +11,7 @@ from training.models.retina.retina import Retina
 from training.models.retina.helper import get_retina_model_configs
 from training.models.baseline_3et import Baseline_3ET 
 from training.models.quantization.lsqplus_quantize_V2 import prepare as lsqplusprepareV2 
-from training.models.utils import convert_to_dynap, estimate_model_size
+from training.models.utils import convert_to_dynap, estimate_model_size, convert_to_n6
 from training.callbacks.logging import LoggingCallback 
 
 from data.module import EyeTrackingDataModule 
@@ -29,7 +29,7 @@ paths = {
 def launch_fire(
     # generic 
     num_workers=4,
-    device=1,
+    device=0,
     wandb_mode="run",  # ["disabled", "run"]
     project_name="event_eye_tracking",
     run_name=None,
@@ -92,7 +92,7 @@ def launch_fire(
 
 
     # LOAD MODEL
-    if training_params["arch_name"][:6] == "retina":
+    if training_params["arch_name"][:6] == "retina": 
         model = Retina(dataset_params, training_params, layers_config)
         if training_params["arch_name"] =="retina_snn":
             model = from_model(
@@ -125,7 +125,7 @@ def launch_fire(
             batch_init=training_params["batch_size"],
         )
 
-    # LOAD TRAINER  
+    # LOAD TRAINER   
     training_module = EyeTrackingModelModule(model, dataset_params, training_params) 
     training_module.configure_optimizers() 
     wandb_logger = WandbLogger(project=project_name, name=run_name, save_dir=out_dir, mode=wandb_mode)
@@ -135,23 +135,30 @@ def launch_fire(
         optimizer=training_module.optimizer, 
         dataset_params=dataset_params,
         training_params=training_params) 
+    
     trainer = pl.Trainer(
-        max_epochs=training_params["num_epochs"], 
+        #max_epochs=training_params["num_epochs"], 
         accelerator="gpu",
+        max_steps=50,
         devices=[device],
         num_sanity_val_steps=0, 
         callbacks=[logging_callback],
         logger=wandb_logger)
     if path_to_run != None:
-        trainer.load(path_to_run)
-
+        trainer.load(path_to_run) 
 
     trainer.fit(training_module, datamodule=data_module)
     trainer.validate(training_module, dataloaders=data_module.val_dataloader())
-
-    example_input = torch.ones(training_params["batch_size"] * dataset_params["num_bins"], *input_shape)
-    torch.onnx.export(model, example_input, os.path.join(out_dir, "models", "model.onnx"), input_names=['input'], output_names=['output'], opset_version=11)
-
+    
+    if training_params["arch_name"] =="retina_ann": 
+        model = convert_to_n6(model.cpu(), input_shape=input_shape)
+                
+    example_input = torch.ones(dataset_params["num_bins"], *input_shape)
+    torch.onnx.export(model, example_input, 
+                      os.path.join(out_dir, "models", "model.onnx"), 
+                      input_names=['input'], output_names=['output'], 
+                      opset_version=11, 
+                      dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}})
 
 if __name__ == "__main__":
     fire.Fire(launch_fire)

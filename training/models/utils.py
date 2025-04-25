@@ -12,11 +12,11 @@ except:
 
 def compute_output_dim(training_params):
     # select loss
-    if training_params["arch_name"][:6] == "retina":
+    if training_params["arch_name"] == "3et" or (not training_params["use_yolo_loss"]):
+        output_dim  = 2 
+    else:
         output_dim  = training_params["SxS_Grid"]  * training_params["SxS_Grid"] \
             *(training_params["num_classes"] + training_params["num_boxes"] * 5) 
-    else:
-        output_dim  = 2
     return output_dim
 
 def estimate_activations_size(x):
@@ -147,6 +147,24 @@ def convert_to_dynap(snn_model, input_shape, dvs_input=False):
 
     return dynapcnn_net
 
+def convert_to_n6(ann_model, input_shape, dvs_input=False): 
+    
+    ann_model.eval()
+ 
+    with torch.no_grad():
+        layers_model = []
+
+        for layer in ann_model.children():  
+            if isinstance(layer, torch.nn.BatchNorm2d):
+                assert isinstance(layers_model[-1], torch.nn.Conv2d)
+                layers_model[-1] = fuse_conv_bn(layers_model[-1], layer) 
+            else:
+                layers_model.append(layer)
+
+        ann_model = torch.nn.Sequential(*layers_model)
+
+    return ann_model
+
 def get_spiking_threshold_list(snn_model):
     # compute spiking thresholds for input loss
     spiking_thresholds = [] 
@@ -170,19 +188,22 @@ def get_spiking_threshold_list(snn_model):
 
 def fuse_conv_bn(conv, bn):
     
-    fused = torch.nn.Conv2d(
+    fused = nn.Conv2d(
         conv.in_channels,
         conv.out_channels,
         kernel_size=conv.kernel_size,
         stride=conv.stride,
         padding=conv.padding,
+        dilation=conv.dilation,
+        groups=conv.groups,
         bias=False
     )
-
-    # setting weights
+    
+    # fuse weights
     w_conv = conv.weight.clone().view(conv.out_channels, -1)
-    w_bn = torch.diag(bn.weight.div(torch.sqrt(bn.eps+bn.running_var)))
-    fused.weight.copy_( torch.mm(w_bn, w_conv).view(fused.weight.size()) )
+    bn_std = torch.sqrt(bn.running_var + bn.eps)
+    w_bn = torch.diag(bn.weight.div(bn_std))
+    fused.weight.copy_(torch.mm(w_bn, w_conv).view(fused.weight.size()))
 
 
     return fused

@@ -96,6 +96,7 @@ See the list of arguments in the launch_fire function and the `config/defaults.y
 python3 -m scripts.train --run_name="retina-ann" 
 ```
 
+
 ## Deployment 
 
 Install dependencies for TFlite
@@ -107,7 +108,8 @@ pip install onnx2tf onnx-tf tensorflow onnx_graphsurgeon tf_keras
 Quantiazation INT8 : Example for 3et_on_ini30
 
 ```
-onnx2tf -i output/retina_ann/models/model.onnx -o output/retina_ann/models/model_tf
+python3 -m onnxsim output/retina-ann/models/model.onnx output/retina-ann/models/model-simplified.onnx
+onnx2tf -i output/retina-ann/models/model.onnx -o output/retina-ann/models/model_tf
 python3 -m scripts.quantize
 ```
 

@@ -1,6 +1,6 @@
 training_params:
   # training setting
-  arch_name: retina_ann # ["retina_snn", "retina_ann", "3et"]
+  arch_name: retina_ann #["retina_snn", "retina_ann", "3et"]
   lr_model: 0.001
   num_epochs: 1
   batch_size: 64
@@ -28,6 +28,7 @@ training_params:
   verify_hardware_compatibility: false
 
   # losses
+  use_yolo_loss: true 
   w_euclidian_loss: 1 
   w_box_loss: 7.5
   w_conf_loss: 1.5 
@@ -42,16 +43,15 @@ dataset_params:
   ini30_val_idx: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29] 
 
   # input shape
-  num_bins: 20
+  num_bins: 10
   input_channel: 2
   img_width: 64
   img_height: 64
 
   # custom loader settings
-  events_per_frame: 300
-  events_per_step: 20
-  fixed_window: false
-  fixed_window_dt: 2500
+  events_per_frame: 300 
+  fixed_window: true
+  fixed_window_dt: 2500 #us
 
   # data augmentations
   shuffle: true

@@ -103,7 +103,7 @@ class LoggerOrchestrator:
         self.logger.experiment.log({f"{self.dataset_name}/distance": self.distance})
 
         # Real IOU
-        if self.training_params["arch_name"][:6] == "retina":
+        if self.training_params["arch_name"] == "retina_snn":
             box_target = outputs["memory"]["box"]["target"]
             box_pred = outputs["memory"]["box"]["pred"]
             self.iou_metric = intersection_over_union(box_target, box_pred).mean()
