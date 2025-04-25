@@ -1,7 +1,9 @@
 import torch, pdb, os
-import pytorch_lightning as pl
 from sinabs import SNNAnalyzer
 from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
+import pytorch_lightning as pl
+from pytorch_lightning.utilities.model_summary import ModelSummary
+
 from training.loss import YoloLoss, EuclidianLoss, SpeckLoss
 from training.models.spiking.lpf import LPFOnline
 from training.models.utils import get_spiking_threshold_list
@@ -58,18 +60,21 @@ class EyeTrackingModelModule(pl.LightningModule):
 
     def forward(self, x):  
         if self.training_params["arch_name"][:6] =="retina":
-            x = x.view(-1, x.size(2), x.size(3), x.size(4)) 
+            B, T, C, H, W = x.shape
+            x = x.view(-1, C, H, W)
             if self.training_params["arch_name"] =="retina_snn":
                 return self.model.spiking_model(x)   
         return self.model(x) 
 
-    def training_step(self, batch, batch_idx):
-        data, labels, _ = batch
+    def on_train_start(self): 
         self.model = self.model.to(self.device)
+        
+    def training_step(self, batch, batch_idx):
+        data, labels, _ = batch 
         data, labels = data.to(self.device), labels.to(self.device)
 
         # Forward pass
-        outputs = self(data)
+        outputs = self.forward(data)
 
         # Apply LPF if enabled
         if self.training_params["arch_name"] =="retina_snn":

@@ -41,10 +41,12 @@ def launch_fire(
     torch.autograd.set_detect_anomaly(True)
     torch.set_default_dtype(torch.float) 
     if num_workers > 1:
-        torch.multiprocessing.set_start_method("spawn", force=True)
+        if torch.multiprocessing.get_start_method(allow_none=True) != 'spawn':
+            torch.multiprocessing.set_start_method("spawn", force=True)
         torch.set_num_threads(num_workers)
-        torch.set_num_interop_threads(num_workers) 
-    torch.set_float32_matmul_precision('medium') 
+        torch.set_num_interop_threads(num_workers)
+
+    torch.set_float32_matmul_precision('medium')
     out_dir = os.path.join(paths["output_dir"], run_name)
     os.makedirs(out_dir, exist_ok=True)
     os.makedirs(os.path.join(out_dir, "video"), exist_ok=True)
@@ -137,9 +139,8 @@ def launch_fire(
         training_params=training_params) 
     
     trainer = pl.Trainer(
-        #max_epochs=training_params["num_epochs"], 
-        accelerator="gpu",
-        max_steps=50,
+        max_epochs=training_params["num_epochs"], 
+        accelerator="gpu", 
         devices=[device],
         num_sanity_val_steps=0, 
         callbacks=[logging_callback],

@@ -66,6 +66,8 @@ pip install -r requirements.txt
 
 
 #### Datasets
+
+##### Ini-30 Dataset
 Click  [here](https://zenodo.org/records/11203260?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6ImEzYmE4ZTI4LTU2NDQtNDhiNC05YjcxLTYyZjRiNzNhYzU2MCIsImRhdGEiOnt9LCJyYW5kb20iOiI0MmY3NDgwOTZiZDM4YWM2NDhmNTk4ZTc5MDMxYTg2NiJ9.oyQ8cMq0xVIoCC0JLpnLIUWnsSVVJS91dzZJkwqTmTgaETtkTJqL7qBCu6Nz9bBdR1IhUGViAOSpTc6Z02ja5Q) to download the Ini-30 Dataset.
 
 Verify the structure:
@@ -78,6 +80,10 @@ Verify the structure:
 ├── ...
 ├── silver.csv
 ```
+
+I have benchmarked different methods to aggregate event data and the `np.add.at` operators was the fastest. The `dv.Accumulator` in `data/datasets/ini_30/ini_30_aeadat_processsor.py` is currently the bottleneck causing the dataloader in the Ini-30 Dataset to be slow. You can speed it up by saving/loading the event windows.
+
+##### 3ET Dataset
 
 Follow the instruction [here](https://github.com/qinche106/cb-convlstm-eyetracking) to download the 3ET Dataset
 
@@ -93,7 +99,7 @@ Click [here](https://zenodo.org/records/15143697) to download a pretrained model
 See the list of arguments in the launch_fire function and the `config/defaults.yaml`.
 
 ```
-python3 -m scripts.train --run_name="retina-ann" 
+python3 -m scripts.train --run_name="retina-ann-v2" 
 ```
 
 

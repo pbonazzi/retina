@@ -118,6 +118,8 @@ class Ini30Dataset:
         return {"t": evs_timestamp, "p": evs_features, "xy": evs_coord}
 
     def load_static_window(self, data, labels):
+        
+        # collect labels
         tab_start, tab_last = labels.iloc[0], labels.iloc[-1]
         start_label = (int(tab_start.center_x.item()), int(tab_start.center_y.item()))
         end_label = (int(tab_last.center_x.item()), int(tab_last.center_y.item()))
@@ -169,10 +171,12 @@ class Ini30Dataset:
             t = evs_t[start_idx:][evs_t[start_idx:] <= fixed_tmp]
             if t.shape[0] == 0:
                 continue
+            
             xy = evs_xy[start_idx : start_idx + t.shape[0], :]
             p = evs_p[start_idx : start_idx + t.shape[0]]
 
             np.add.at(data[i, 0], (xy[p == 0, 0], xy[p == 0, 1]), 1)
+            
             if self.input_channel > 1:
                 np.add.at(
                     data[i, self.input_channel - 1], (xy[p == 1, 0], xy[p == 1, 1]), 1
