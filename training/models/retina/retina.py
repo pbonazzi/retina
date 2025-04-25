@@ -1,8 +1,6 @@
 import torch, pdb
 import torch.nn as nn
 
-from pytorch_tcn import TemporalConv1d
-
 import sinabs
 import sinabs.activation as sina
 

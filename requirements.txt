@@ -13,3 +13,4 @@ tonic
 sinabs>=2.0
 dv-processing 
 ipykernel
+torchvision
