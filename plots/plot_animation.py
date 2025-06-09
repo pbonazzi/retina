@@ -154,6 +154,8 @@ def plot_animation_points(events, target_points, pred_points, include_point1=Tru
     def animate(frame_idx):
         evs = events[frame_idx] 
         im.set_data(evs.clip(0, 1))
+
+        
         # annotate number of events
         anim_list = [im]
         

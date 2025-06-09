@@ -1,9 +1,10 @@
 import os, pdb
 
 # custom
-from data.utils import load_yaml_config
-from data.datasets.synthetic_3et.synthetic_dataset import SyntheticDataset
+from data.utils import load_yaml_config 
+from .synthetic_dataset import SyntheticDataset
 from data.transforms.helper import get_transforms
+from PIL import ImageDraw
 
 def get_3et_dataset(name, training_params, dataset_params):
      
@@ -19,7 +20,6 @@ def get_3et_dataset(name, training_params, dataset_params):
 
     return dataset
 
-
 if __name__ == "__main__":
 
     default_params = load_yaml_config("configs/default.yaml")
@@ -30,5 +30,11 @@ if __name__ == "__main__":
     dataset = get_3et_dataset("train", training_params, dataset_params) 
 
     from torchvision import transforms 
-    image = transforms.ToPILImage()(dataset[0][0][0].squeeze(0)) 
-    image.save("output_image.png")
+    for i in range(len(dataset)):
+        image = transforms.ToPILImage()(dataset[i][0][0].squeeze(0)).convert("RGB") 
+        bbox = (dataset[i][1] * 64).numpy() 
+        draw = ImageDraw.Draw(image)
+        draw.rectangle(bbox, outline="red", width=2)
+        image.save(f"output/output_image_{i}.png")
+        if i == 2:
+            break

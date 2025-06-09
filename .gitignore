@@ -1,5 +1,6 @@
 # Additional files to ignore for the retina project
 output/
+train_script.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

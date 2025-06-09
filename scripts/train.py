@@ -1,18 +1,19 @@
 import fire, wandb, os, yaml, pdb, torch 
 from sinabs.from_torch import from_model 
 from dotenv import load_dotenv
+from ptflops import get_model_complexity_info
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger  
 from pytorch_lightning import seed_everything
 
-from training.module import EyeTrackingModelModule 
-from training.models.retina.retina import Retina
-from training.models.retina.helper import get_retina_model_configs
-from training.models.baseline_3et import Baseline_3ET 
-from training.models.quantization.lsqplus_quantize_V2 import prepare as lsqplusprepareV2 
-from training.models.utils import convert_to_dynap, estimate_model_size, convert_to_n6
-from training.callbacks.logging import LoggingCallback 
+from engine.module import EyeTrackingModelModule 
+from engine.models.retina.retina import Retina
+from engine.models.retina.helper import get_retina_model_configs
+from engine.models.baseline_3et import Baseline_3ET 
+from engine.models.quantization.lsqplus_quantize_V2 import prepare as lsqplusprepareV2 
+from engine.models.utils import convert_to_dynap, estimate_model_size, convert_to_n6
+from engine.callbacks.logging import LoggingCallback 
 
 from data.module import EyeTrackingDataModule 
 from data.utils import load_yaml_config
@@ -34,7 +35,8 @@ def launch_fire(
     project_name="event_eye_tracking",
     run_name=None,
     path_to_run=None,
-    path_to_config="configs/default.yaml"
+    path_to_config="configs/default.yaml",
+    ini30_val_idx=None,
     ): 
 
     # GENERICS INITS
@@ -64,7 +66,9 @@ def launch_fire(
         params = load_yaml_config(path_to_config)
         training_params = params["training_params"]
         training_params["out_dir"] = out_dir
-        dataset_params = params["dataset_params"] 
+        dataset_params = params["dataset_params"]  
+        if ini30_val_idx is not None:
+            dataset_params["ini30_val_idx"] = ini30_val_idx
         quant_params = params["quant_params"] 
  
         # verify conflicts
@@ -92,11 +96,16 @@ def launch_fire(
     )
     data_module.setup(stage='fit') 
 
-
     # LOAD MODEL
     if training_params["arch_name"][:6] == "retina": 
         model = Retina(dataset_params, training_params, layers_config)
         if training_params["arch_name"] =="retina_snn":
+            def prepare_input(resolution):
+                t_b = dataset_params["num_bins"] * training_params["batch_size"]
+                x1 = torch.FloatTensor(t_b, *resolution)  
+                return dict(x = x1)
+            macs, params = get_model_complexity_info(model, input_shape, input_constructor=prepare_input)
+            print(f"\nModel MACs: {macs}, Params: {params}\n")  
             model = from_model(
                 model.seq,
                 add_spiking_output=False,
@@ -106,14 +115,20 @@ def launch_fire(
                 dynapcnn_net = convert_to_dynap(model.spiking_model.cpu(), input_shape=input_shape)
                 dynapcnn_net.make_config(device="speck2fmodule") 
             example_input = torch.ones(training_params["batch_size"] * dataset_params["num_bins"], *input_shape)
-            model.spiking_model(example_input)
-    
+            model.spiking_model(example_input)  
+            
+        else:
+            macs, params = get_model_complexity_info(model, input_shape)
+            print(f"\nModel MACs: {macs}, Params: {params}\n") 
+        
     elif training_params["arch_name"] == "3et":
         model = Baseline_3ET(
             height=dataset_params["img_height"],
             width=dataset_params["img_width"],
             input_dim=dataset_params["input_channel"]) 
-
+        macs, params = get_model_complexity_info(model, (dataset_params["num_bins"], *input_shape))
+        print(f"\nModel MACs: {macs}, Params: {params}\n")
+        
     # LOAD QUANTIZATION
     if (quant_params["a_bit"] < 32 or quant_params["w_bit"] < 32) and  (quant_params["a_bit"] > 1 or quant_params["w_bit"] > 1): 
         lsqplusprepareV2(
@@ -139,12 +154,13 @@ def launch_fire(
         training_params=training_params) 
     
     trainer = pl.Trainer(
-        max_epochs=training_params["num_epochs"], 
+        max_epochs=training_params["num_epochs"],  
         accelerator="gpu", 
         devices=[device],
         num_sanity_val_steps=0, 
         callbacks=[logging_callback],
         logger=wandb_logger)
+    
     if path_to_run != None:
         trainer.load(path_to_run) 
 

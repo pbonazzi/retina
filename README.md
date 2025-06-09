@@ -57,7 +57,7 @@ cd retina
 ### Create the environment
 
 ```
-conda create -n retina python=3.10 -y
+conda create -n retina python=3.8 -y
 conda activate retina 
 pip install -r requirements.txt 
 ```
@@ -99,7 +99,7 @@ Click [here](https://zenodo.org/records/15143697) to download a pretrained model
 See the list of arguments in the launch_fire function and the `config/defaults.yaml`.
 
 ```
-python3 -m scripts.train --run_name="retina-ann-v2" 
+python3 -m scripts.train --run_name="retina-ann" 
 ```
 
 
@@ -114,8 +114,8 @@ pip install onnx2tf onnx-tf tensorflow onnx_graphsurgeon tf_keras
 Quantiazation INT8 : Example for 3et_on_ini30
 
 ```
-python3 -m onnxsim output/retina-ann/models/model.onnx output/retina-ann/models/model-simplified.onnx
-onnx2tf -i output/retina-ann/models/model.onnx -o output/retina-ann/models/model_tf
+python3 -m onnxsim output/retina-ann-v6-evs-1000/models/model.onnx output/retina-ann-v6-evs-1000/models/model-simplified.onnx
+onnx2tf -i output/retina-ann-v6-evs-1000/models/model.onnx -o output/retina-ann-v6-evs-1000/models/model_tf
 python3 -m scripts.quantize
 ```
 

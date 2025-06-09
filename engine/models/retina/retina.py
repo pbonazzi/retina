@@ -9,6 +9,19 @@ from ..binarization.binary_operator import DoReFaConv2d, DoReFaLinear
 
 from data.utils import load_yaml_config
 
+class PredictionHead(nn.Module):
+    def __init__(self, hidden_dim):
+        super().__init__()
+        self.box_head = nn.Sequential(
+            nn.Linear(hidden_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, 4)
+        ) 
+
+    def forward(self, x):
+        boxes = self.box_head(x) 
+        return boxes
+        
 class Retina(nn.Module):
     def __init__(self, dataset_params, training_params, layers_config):
         super(Retina, self).__init__()
@@ -49,25 +62,7 @@ class Retina(nn.Module):
                     layer["img_height"],
                     layer["input_channel"],
                 )
-                print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in)
-
-            elif layer["name"] == "TemporalConv":
-                # input dimensions
-                print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in)
-                modules.append(
-                    TemporalConv1d(
-                        in_channels=c_in,
-                        out_channels=layer["out_dim"],
-                        kernel_size=layer["k_xy"],
-                        stride=layer["s_xy"], 
-                        casual=True
-                    )
-                )
-
-                # out dimensions
-                c_in = layer["out_dim"]
-                c_x = (c_x - (layer["k_xy"] - 1) * layer["p_xy"]) // layer["s_xy"] + 1
-                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in)
+                print(str(i), layer["name"], " in: \n ", c_x, c_y, c_in) 
 
             elif layer["name"] == "Conv":
                 # input dimensions
@@ -87,10 +82,7 @@ class Retina(nn.Module):
                 c_in = layer["out_dim"]
                 c_x = ((c_x - layer["k_xy"] + 2 * layer["p_xy"]) // layer["s_xy"]) + 1
                 c_y = ((c_y - layer["k_xy"] + 2 * layer["p_xy"]) // layer["s_xy"]) + 1
-                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in)
-
-                # weights init
-                torch.nn.init.xavier_uniform_(modules[-1].weight)
+                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in) 
 
             elif layer["name"] == "DoReFaConv2d":
                 # input dimensions
@@ -110,11 +102,7 @@ class Retina(nn.Module):
                 c_in = layer["out_dim"]
                 c_x = ((c_x - layer["k_xy"] + 2 * layer["p_xy"]) // layer["s_xy"]) + 1
                 c_y = ((c_y - layer["k_xy"] + 2 * layer["p_xy"]) // layer["s_xy"]) + 1
-                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in)
-
-                # weights init
-                torch.nn.init.xavier_uniform_(modules[-1].weight)
-            
+                print(str(i), layer["name"], " out: \n ", c_x, c_y, c_in) 
 
             elif layer["name"] == "DoReFaLinear":
                 # input dimensions
@@ -123,10 +111,7 @@ class Retina(nn.Module):
 
                 # out dimensions
                 print(layer["name"], " out: \n ", layer["out_dim"])
-                c_in = layer["out_dim"]
-
-                # weights init
-                torch.nn.init.xavier_uniform_(modules[-1].weight)
+                c_in = layer["out_dim"] 
 
             elif layer["name"] == "Linear":
                 # input dimensions
@@ -137,12 +122,16 @@ class Retina(nn.Module):
                 print(layer["name"], " out: \n ", layer["out_dim"])
                 c_in = layer["out_dim"]
 
-                # weights init
-                torch.nn.init.xavier_uniform_(modules[-1].weight)
-
+            elif layer["name"] == "PredictionHead":
+                # input dimensions
+                print(layer["name"], " in: \n ", c_in)
+                modules.append(PredictionHead(c_in))
 
             elif layer["name"] == "ReLu":
                 modules.append(nn.ReLU())
+
+            elif layer["name"] == "Sigmoid":
+                modules.append(nn.Sigmoid()) 
 
             elif layer["name"] == "BatchNorm":
                 modules.append(nn.BatchNorm2d(c_in))
@@ -202,10 +191,10 @@ class Retina(nn.Module):
             else:
                 raise NotImplementedError("Unknown Layer")
 
-        self.seq_model = nn.Sequential(*modules) 
+        self.seq = nn.Sequential(*modules) 
 
-    def forward(self, x):
-        return self.seq_model(x)
+    def forward(self, x): 
+        return self.seq(x)
 
 
 
@@ -213,9 +202,38 @@ if __name__ == "__main__":
     import torch 
     from .helper import get_retina_model_configs
     
+
+
     params = load_yaml_config("configs/default.yaml")
     training_params = params["training_params"]
+    training_params["batch_size"] = 1
     dataset_params = params["dataset_params"] 
     quant_params = params["quant_params"] 
+
     layers_config = get_retina_model_configs(dataset_params, training_params, quant_params)
     model = Retina(dataset_params, training_params, layers_config) 
+
+    input_shape = ( 
+        dataset_params["input_channel"],
+        dataset_params["img_width"],
+        dataset_params["img_height"],
+    )
+
+    print(f"Input shape: {input_shape}")
+    
+    def prepare_input(resolution):
+        t_b = dataset_params["num_bins"] * training_params["batch_size"]
+        x1 = torch.FloatTensor(t_b, *resolution)  
+        return dict(x = x1)
+
+    from ptflops import get_model_complexity_info
+    macs, params = get_model_complexity_info(model, input_shape, input_constructor=prepare_input)
+    print(f"\n[ptflops] Model MACs: {macs}, Params: {params}\n")   
+
+    from fvcore.nn import FlopCountAnalysis, parameter_count
+    flops = FlopCountAnalysis(model, torch.randn(1, *input_shape))
+    print(f"\n[fvcore] Model MACs: {flops.total() / 2}, Params: {sum(parameter_count(model).values())}\n")   
+
+    from thop import profile
+    macs, params = profile(model, inputs=(torch.randn(1, *input_shape),), verbose=True)
+    print(f"\n[thop] MACs: {macs/1e6:.2f} M, Params: {params/1e3:.2f} K") 

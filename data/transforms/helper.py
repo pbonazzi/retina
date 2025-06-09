@@ -16,7 +16,7 @@ def get_transforms(dataset_params, training_params, augmentations: bool = False)
     """
     sensor_size = (dataset_params["img_height"], dataset_params["img_width"], dataset_params["input_channel"])
 
-    target_transforms = FromPupilCenterToBoundingBox(   training_params["arch_name"] == "retina_snn" or training_params["use_yolo_loss"],  
+    target_transforms = FromPupilCenterToBoundingBox(   arch_name=training_params["arch_name"],  
                                                         bbox_w=training_params["bbox_w"],
                                                         SxS_Grid=training_params["SxS_Grid"],
                                                         num_classes=training_params["num_classes"],

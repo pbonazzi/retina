@@ -47,7 +47,7 @@ class Downscale:
 class FromPupilCenterToBoundingBox:
     def __init__(
         self,
-        yolo_loss: bool, 
+        arch_name: str, 
         num_bins: int,
         image_size: Tuple[int, int] = (640, 480),
         SxS_Grid: int = 5,
@@ -56,7 +56,7 @@ class FromPupilCenterToBoundingBox:
         bbox_w: int = 10,
         dataset_name="ini-30",
     ):
-        self.yolo_loss = yolo_loss 
+        self.arch_name = arch_name 
         self.num_bins = num_bins
         self.image_size = image_size
         self.delta = bbox_w
@@ -80,7 +80,7 @@ class FromPupilCenterToBoundingBox:
             else: 
                 x_norm, y_norm = x, y
 
-            if not self.yolo_loss:
+            if self.arch_name == "3et":
                 labels.append(torch.tensor([x_norm, y_norm]))
 
             # create bbox
@@ -90,7 +90,9 @@ class FromPupilCenterToBoundingBox:
             x_2, y_2 = x_norm + x_delta, y_norm + y_delta
             box_coordinates = torch.tensor([x_1, y_1, x_2, y_2]).clip(0, 1)
 
-            if self.yolo_loss:
+            if  self.arch_name == "retina_ann":
+                labels.append(box_coordinates)
+            elif self.arch_name == "retina_snn":
                 # grid
                 label_matrix = torch.zeros(
                     (self.S, self.S, self.C + 5 * self.B), dtype=torch.float

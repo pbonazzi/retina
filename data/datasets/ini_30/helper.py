@@ -27,8 +27,7 @@ def get_ini_30_dataset(name, training_params, dataset_params):
 
     input_transforms, target_transforms = get_transforms(dataset_params, training_params)
 
-    dataset = Ini30Dataset(
-        training_params=training_params,
+    dataset = Ini30Dataset( 
         dataset_params=dataset_params, 
         transform=input_transforms,
         target_transform=target_transforms, 

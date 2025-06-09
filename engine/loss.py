@@ -258,6 +258,75 @@ def encode_to_spike_pattern(bboxes, num_neurons):
 
     return spike_patterns
 
+class BboxLoss(nn.Module):
+    """
+    Calculate the loss for Yolo (v1) model
+    """
+
+    def __init__(self, dataset_params, training_params):
+        super(BboxLoss, self).__init__() 
+
+        """
+        S is split size of image
+        B is number of boxes
+        C is number of classes
+        """ 
+        self.bbox_w = training_params["bbox_w"]
+        self.img_width = dataset_params["img_width"]
+
+        # Losses
+        self.w_box_loss = training_params["w_box_loss"] 
+        self.w_euclidian_loss = training_params["w_euclidian_loss"]
+        self.w_iou_loss = 0
+
+        self.box_loss = 0 
+        self.iou_loss = 0
+        self.point_loss = 0
+        self.total_loss = 0
+
+        # Save last predictions and targets for loggings
+        self.memory = {
+            "distance": None,
+            "points": {"target": None, "pred": None},
+            "box": {"target": None, "pred": None},
+        }
+
+    def square_results(self, predictions):
+        norm_pred1 = torch.zeros_like(predictions)
+        point_1 = (
+            predictions[..., :2] + (predictions[..., 2:] - predictions[..., :2]) / 2
+        )
+        norm_pred1[..., :2] = point_1 - self.bbox_w / self.img_width
+        norm_pred1[..., 2:] = point_1 + self.bbox_w / self.img_width
+        return norm_pred1
+
+    def forward(self, predictions, target):
+        if len(target.shape) == 5:
+            target = target.flatten(end_dim=1)  
+            
+        box_predictions = self.square_results(predictions) 
+        box_targets = target
+        iou_b1 = intersection_over_union(box_targets, box_predictions).sum()
+        self.box_loss = 1 - iou_b1
+
+        # point loss 
+        pred_point = box_predictions[..., :2] + (box_predictions[..., 2:] - box_predictions[..., :2]) / 2 
+        target_point = box_targets[..., :2] + (box_targets[..., 2:] - box_targets[..., :2]) / 2
+        self.point_loss = torch.nn.PairwiseDistance(p=2)(pred_point, target_point).sum() 
+
+        loss = {
+            "box_loss": self.box_loss * self.w_box_loss,
+            "distance_loss": self.point_loss * self.w_euclidian_loss, 
+        }
+
+        self.memory["box"]["target"] = box_targets
+        self.memory["box"]["pred"] = box_predictions
+        self.memory["points"]["target"] = target_point
+        self.memory["points"]["pred"] = pred_point
+        self.memory["distance"] = self.point_loss
+
+        return loss
+
 
 class YoloLoss(nn.Module):
     """

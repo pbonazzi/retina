@@ -12,9 +12,11 @@ except:
 
 def compute_output_dim(training_params):
     # select loss
-    if training_params["arch_name"] == "3et" or (not training_params["use_yolo_loss"]):
+    if training_params["arch_name"] == "3et":
         output_dim  = 2 
-    else:
+    elif training_params["arch_name"] == "retina_ann":
+        output_dim = 4
+    elif training_params["arch_name"] == "retina_snn":
         output_dim  = training_params["SxS_Grid"]  * training_params["SxS_Grid"] \
             *(training_params["num_classes"] + training_params["num_boxes"] * 5) 
     return output_dim
@@ -79,6 +81,7 @@ def estimate_model_size(model, input_tensor):
 
 
 def convert_exodus_to_sinabs(snn_model):
+    from training.models.spiking.decimation import DecimationLayer
     if exodus_installed:
         for i, layer in enumerate(snn_model.children()):
             if isinstance(layer, DecimationLayer):  
@@ -166,6 +169,7 @@ def convert_to_n6(ann_model, input_shape, dvs_input=False):
     return ann_model
 
 def get_spiking_threshold_list(snn_model):
+    from training.models.spiking.decimation import DecimationLayer
     # compute spiking thresholds for input loss
     spiking_thresholds = [] 
     for layer in snn_model:

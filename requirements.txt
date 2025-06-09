@@ -1,5 +1,6 @@
 thop 
 onnx
+onnxruntime
 tables  
 tqdm 
 python-dotenv
@@ -14,3 +15,4 @@ sinabs>=2.0
 dv-processing 
 ipykernel
 torchvision
+tensorflow

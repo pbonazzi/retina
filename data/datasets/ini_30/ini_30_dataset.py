@@ -23,8 +23,7 @@ load_dotenv()
 
 class Ini30Dataset:
     def __init__(
-        self,
-        training_params,
+        self, 
         dataset_params, 
         list_experiments: list,
         transform: Optional[Callable] = None,
@@ -117,7 +116,7 @@ class Ini30Dataset:
 
         return {"t": evs_timestamp, "p": evs_features, "xy": evs_coord}
 
-    def load_static_window(self, data, labels):
+    def load_static_window(self, raw_data, labels): 
         
         # collect labels
         tab_start, tab_last = labels.iloc[0], labels.iloc[-1]
@@ -125,8 +124,8 @@ class Ini30Dataset:
         end_label = (int(tab_last.center_x.item()), int(tab_last.center_y.item()))
 
         start_time = tab_last["timestamp"] - self.fixed_window_dt * (self.num_bins + 1)
-        evs_t = data["t"][data["t"] >= start_time]
-        evs_p, evs_xy = data["p"][-evs_t.shape[0] :], data["xy"][-evs_t.shape[0] :, :]
+        evs_t = raw_data["t"][raw_data["t"] >= start_time]
+        evs_p, evs_xy = raw_data["p"][-evs_t.shape[0] :], raw_data["xy"][-evs_t.shape[0] :, :]
 
         # frame
         data = np.zeros((self.num_bins, self.input_channel, self.img_width, self.img_height))
@@ -147,7 +146,7 @@ class Ini30Dataset:
             elif idx == len(labels["timestamp"]):
                 x_axis.append(end_label[0])
                 y_axis.append(end_label[1])
-            else:  # Weighted interpolation
+            else:
                 t0 = labels["timestamp"].iloc[idx - 1]
                 t1 = labels["timestamp"].iloc[idx]
 
@@ -301,7 +300,9 @@ class Ini30Dataset:
 
         return frames, labels, avg_dt
 
-    def __getitem__(self, index):
+    def __getitem__(self, index): 
+        exp_id = self.y.iloc[index]["exp_name"]
+    
         labels = self.load_labels(index)
         events = self.load_events(index)
         tmp_struct = make_structured_array(
@@ -324,14 +325,12 @@ class Ini30Dataset:
             tmp_struct = tj_fn(tmp_struct)
 
         events = {
-            "xy": np.hstack(
-                [tmp_struct["x"].reshape(-1, 1), tmp_struct["y"].reshape(-1, 1)]
-            ),
+            "xy": np.hstack( [tmp_struct["x"].reshape(-1, 1), tmp_struct["y"].reshape(-1, 1)]),
             "p": tmp_struct["p"] * 1,
             "t": tmp_struct["t"],
         }
 
-        # interpolate labels and events
+        # interpolate labels and events 
         if self.fixed_window:
             events, labels = self.load_static_window(events, labels)
             avg_dt = self.fixed_window_dt
@@ -339,9 +338,9 @@ class Ini30Dataset:
             events, labels, avg_dt = self.load_dynamic_window(events, labels)
 
         event_tensor = events.float()
-        labels_tensor = labels.float() 
+        labels_tensor = labels.float()[0]
         
         if event_tensor.shape[1] == 1:
             event_tensor = 1 - event_tensor
 
-        return event_tensor, labels_tensor, avg_dt
+        return event_tensor, labels_tensor, avg_dt, exp_id

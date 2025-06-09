@@ -4,9 +4,9 @@ from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 import pytorch_lightning as pl
 from pytorch_lightning.utilities.model_summary import ModelSummary
 
-from training.loss import YoloLoss, EuclidianLoss, SpeckLoss
-from training.models.spiking.lpf import LPFOnline
-from training.models.utils import get_spiking_threshold_list
+from .loss import YoloLoss, EuclidianLoss, SpeckLoss, BboxLoss
+from .models.spiking.lpf import LPFOnline
+from .models.utils import get_spiking_threshold_list, compute_output_dim
 
 class EyeTrackingModelModule(pl.LightningModule):
     def __init__(self, model, dataset_params, training_params):
@@ -35,16 +35,18 @@ class EyeTrackingModelModule(pl.LightningModule):
                 tau_mem=training_params["lpf_tau_mem_syn"][0],
                 tau_syn=training_params["lpf_tau_mem_syn"][1],
                 path_to_image=os.path.join(training_params["out_dir"]),
-                num_channels=training_params["output_dim"],
+                num_channels=compute_output_dim(training_params),
                 kernel_size=min(training_params["lpf_kernel_size"], self.num_bins),
                 train_scale=training_params["lpf_train"],
             ).to(self.device)
 
         # Loss initialization
-        if self.training_params["arch_name"] == "3et" or (not self.training_params["use_yolo_loss"]):
-            self.euclidian_error = EuclidianLoss()
-        else:
-            self.yolo_error = YoloLoss(dataset_params, training_params) 
+        if self.training_params["arch_name"] == "3et":
+            self.error = EuclidianLoss()
+        elif self.training_params["arch_name"] == "retina_ann":
+            self.error = BboxLoss(dataset_params, training_params) 
+        elif self.training_params["arch_name"] == "retina_snn":
+            self.error = YoloLoss(dataset_params, training_params)  
             
         if self.training_params["arch_name"] =="retina_snn":
             spiking_thresholds = get_spiking_threshold_list(self.model.spiking_model)
@@ -69,19 +71,19 @@ class EyeTrackingModelModule(pl.LightningModule):
     def on_train_start(self): 
         self.model = self.model.to(self.device)
         
-    def training_step(self, batch, batch_idx):
-        data, labels, _ = batch 
+    def training_step(self, batch, batch_idx): 
+        data, labels, _, _ = batch 
         data, labels = data.to(self.device), labels.to(self.device)
 
         # Forward pass
-        outputs = self.forward(data)
+        outputs = self.forward(data)  
 
         # Apply LPF if enabled
         if self.training_params["arch_name"] =="retina_snn":
             outputs = self.model_lpf(outputs)
 
         # Compute loss
-        loss_dict, output_dict = self.compute_loss(outputs, labels)
+        loss_dict, output_dict = self.compute_loss(outputs.clone(), labels.clone())
         output_dict["loss_dict"] = loss_dict
         output_dict["loss"] = loss_dict["total_loss"]
 
@@ -91,12 +93,11 @@ class EyeTrackingModelModule(pl.LightningModule):
         return output_dict
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        data, labels, _ = batch
+        data, labels, _ , _ = batch
         data, labels = data.to(self.device), labels.to(self.device)
 
-        # Forward pass
-        self.model = self.model.to(self.device)
-        outputs = self(data)
+        # Forward pass 
+        outputs = self.forward(data)
 
         # Apply LPF if enabled
         if self.training_params["arch_name"] =="retina_snn":
@@ -111,7 +112,6 @@ class EyeTrackingModelModule(pl.LightningModule):
         self.log("val_loss", loss_dict["total_loss"], prog_bar=True)
 
         return output_dict
-
 
     def configure_optimizers(self):
         # Optimizer setup
@@ -144,15 +144,8 @@ class EyeTrackingModelModule(pl.LightningModule):
         loss_dict = {}
         output_dict = {}
 
-        # Euclidian Loss
-        if self.training_params["arch_name"] == "3et" or (not self.training_params["use_yolo_loss"]):
-            loss_dict.update(self.euclidian_error(outputs, labels))
-            output_dict["memory"] = self.euclidian_error.memory
-
-        # Yolo Loss
-        else:
-            loss_dict.update(self.yolo_error(outputs, labels))
-            output_dict["memory"] = self.yolo_error.memory 
+        loss_dict.update(self.error(outputs, labels))
+        output_dict["memory"] = self.error.memory 
 
         # Speck Loss
         if self.training_params["arch_name"] =="retina_snn":

@@ -1,9 +1,9 @@
 training_params:
   # training setting
-  arch_name: retina_ann #["retina_snn", "retina_ann", "3et"] 
+  arch_name: retina_ann  #["retina_snn", "retina_ann", "3et"] 
   lr_model: 0.001
   num_epochs: 1
-  batch_size: 64
+  batch_size: 32
   optimizer: Adam
   scheduler: StepLR
 
@@ -27,14 +27,13 @@ training_params:
   firing_lim: [0.3, 0.4] 
   verify_hardware_compatibility: false
 
-  # losses
-  use_yolo_loss: true 
+  # losses 
   w_euclidian_loss: 1 
   w_box_loss: 7.5
-  w_conf_loss: 1.5 
+  w_conf_loss: 7.5 
   SxS_Grid: 4
   num_classes: 0
-  num_boxes: 2
+  num_boxes: 1
   bbox_w: 5
 
 dataset_params:
@@ -43,15 +42,15 @@ dataset_params:
   ini30_val_idx: [1] 
 
   # input shape
-  num_bins: 10
+  num_bins: 1
   input_channel: 2
   img_width: 64
   img_height: 64
 
   # custom loader settings
-  events_per_frame: 300 
-  fixed_window: true
-  fixed_window_dt: 2500 #us
+  events_per_frame: 1000 
+  fixed_window: false
+  fixed_window_dt: 25000 #us
 
   # data augmentations
   shuffle: true

@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch, pdb, wandb, os
 from plots.plot_animation import plot_animation_points
-from training.loss import intersection_over_union
+from ..loss import intersection_over_union
 
 
 class LoggerOrchestrator:
@@ -92,15 +92,15 @@ class LoggerOrchestrator:
         point_target = outputs["memory"]["points"]["target"]
         point_pred = outputs["memory"]["points"]["pred"]
 
-        # Real distance
+        # Real distance   
         point_pred[:, 0] *= self.img_width
         point_target[:, 0] *= self.img_width
         point_pred[:, 1] *= self.img_height
         point_target[:, 1] *= self.img_height
-        self.distance = torch.nn.PairwiseDistance(p=2)(point_pred, point_target)[
-            -(self.num_bins - self.training_params["lpf_kernel_size"]):
-        ].mean()
-        self.logger.experiment.log({f"{self.dataset_name}/distance": self.distance})
+        self.distance = torch.nn.PairwiseDistance(p=2)(point_pred, point_target)
+        if self.training_params["arch_name"] == "retina_snn":
+            self.distance =  self.distance[-(self.num_bins - self.training_params["lpf_kernel_size"]):].mean()
+        self.logger.experiment.log({f"{self.dataset_name}/distance": self.distance.mean()})
 
         # Real IOU
         if self.training_params["arch_name"] == "retina_snn":
